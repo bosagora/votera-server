@@ -1,0 +1,54 @@
+{
+  "kind": "collectionType",
+  "collectionName": "feeds",
+  "info": {
+    "name": "Feed",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": [
+      "createdAt",
+      "updatedAt"
+    ],
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "target": {
+      "type": "string",
+      "index": true,
+      "required": true
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "NEW_PROPOSAL",
+        "ASSESS_PENDING",
+        "ASSESS_24HR_DEADLINE",
+        "ASSESS_CLOSED",
+        "VOTING_START",
+        "VOTING_PENDING",
+        "VOTING_24HR_DEADLINE",
+        "VOTING_CLOSED",
+        "NEW_PROPOSAL_NOTICE",
+        "NEW_OPINION_COMMENT",
+        "NEW_OPINION_LIKE"
+      ],
+      "required": true
+    },
+    "content": {
+      "type": "component",
+      "repeatable": false,
+      "component": "feed-cotent.content"
+    },
+    "navigation": {
+      "type": "component",
+      "repeatable": false,
+      "component": "navigation.navigation"
+    },
+    "isRead": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

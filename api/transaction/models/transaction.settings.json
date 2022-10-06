@@ -1,0 +1,50 @@
+{
+  "kind": "collectionType",
+  "collectionName": "transactions",
+  "info": {
+    "name": "Transaction",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": true,
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "transactionHash": {
+      "type": "string",
+      "required": true,
+      "unique": true
+    },
+    "blockNumber": {
+      "type": "integer"
+    },
+    "status": {
+      "type": "integer"
+    },
+    "proposal": {
+      "via": "transactions",
+      "model": "proposal"
+    },
+    "method": {
+      "type": "string"
+    },
+    "from": {
+      "type": "string"
+    },
+    "gasUsed": {
+      "type": "biginteger"
+    },
+    "gasPrice": {
+      "type": "biginteger"
+    },
+    "post": {
+      "model": "post"
+    },
+    "ballot": {
+      "via": "transactions",
+      "model": "ballot"
+    }
+  }
+}

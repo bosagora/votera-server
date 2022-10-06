@@ -1,0 +1,40 @@
+{
+  "kind": "singleType",
+  "collectionName": "agoras",
+  "info": {
+    "name": "Agora",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": [
+      "createdAt",
+      "updatedAt"
+    ],
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "commonsBudgetAddress": {
+      "type": "string"
+    },
+    "privacyTermUrl": {
+      "type": "string"
+    },
+    "userServiceTermUrl": {
+      "type": "string"
+    },
+    "proposalFundMin": {
+      "type": "string",
+      "default": "1"
+    },
+    "proposalFundMax": {
+      "type": "string"
+    },
+    "voteraVoteAddress": {
+      "type": "string"
+    },
+    "providerUrl": {
+      "type": "string"
+    }
+  }
+}

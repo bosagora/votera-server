@@ -1,0 +1,157 @@
+{
+  "kind": "collectionType",
+  "collectionName": "proposals",
+  "info": {
+    "name": "proposal",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": [
+      "createdAt",
+      "updatedAt"
+    ],
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "maxLength": 100
+    },
+    "description": {
+      "type": "text"
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "SYSTEM",
+        "BUSINESS"
+      ],
+      "required": true
+    },
+    "status": {
+      "type": "enumeration",
+      "enum": [
+        "CREATED",
+        "PENDING_ASSESS",
+        "ASSESS",
+        "PENDING_VOTE",
+        "VOTE",
+        "REJECT",
+        "CANCEL",
+        "DELETED",
+        "CLOSED"
+      ],
+      "required": true
+    },
+    "fundingAmount": {
+      "type": "string"
+    },
+    "proposalId": {
+      "type": "string",
+      "required": false,
+      "unique": true
+    },
+    "logo": {
+      "model": "file",
+      "via": "related",
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos"
+      ],
+      "plugin": "upload",
+      "required": false,
+      "pluginOptions": {}
+    },
+    "attachment": {
+      "collection": "file",
+      "via": "related",
+      "allowedTypes": [
+        "images",
+        "files",
+        "videos"
+      ],
+      "plugin": "upload",
+      "required": false,
+      "pluginOptions": {}
+    },
+    "activities": {
+      "collection": "activity",
+      "via": "proposal"
+    },
+    "creator": {
+      "model": "member"
+    },
+    "assessPeriod": {
+      "type": "component",
+      "repeatable": false,
+      "component": "common.period"
+    },
+    "votePeriod": {
+      "type": "component",
+      "repeatable": false,
+      "component": "common.period",
+      "required": true
+    },
+    "proposer_address": {
+      "type": "string"
+    },
+    "proposal_fee": {
+      "type": "string"
+    },
+    "vote_start": {
+      "type": "integer"
+    },
+    "vote_end": {
+      "type": "integer"
+    },
+    "vote_open": {
+      "type": "integer"
+    },
+    "doc_hash": {
+      "type": "string"
+    },
+    "proposal_begin": {
+      "type": "integer"
+    },
+    "memberCount": {
+      "type": "integer",
+      "default": 0,
+      "required": true
+    },
+    "likeCount": {
+      "type": "integer",
+      "default": 0,
+      "required": true
+    },
+    "timeAlarm_notified": {
+      "type": "boolean",
+      "default": false
+    },
+    "validators": {
+      "via": "proposal",
+      "collection": "validator"
+    },
+    "signature": {
+      "type": "string"
+    },
+    "assessStart": {
+      "type": "integer"
+    },
+    "assessEnd": {
+      "type": "integer"
+    },
+    "commonsBudgetAddress": {
+      "type": "string"
+    },
+    "voteraVoteAddress": {
+      "type": "string"
+    },
+    "transactions": {
+      "via": "proposal",
+      "collection": "transaction"
+    }
+  }
+}
