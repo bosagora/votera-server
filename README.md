@@ -177,3 +177,105 @@ config location: config/votera.js
 |ProposalFundMax||
 |VoteraVoteAddress|address of votera vote contract|
 |ProviderUrl|address of blockchain provider|
+
+
+## Installation
+
+0. package update
+
+$ sudo apt update
+$ sudo apt upgrade
+
+1. nvm install
+
+$ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+$ wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+
+2. install node
+
+$ nvm install lts/fermium
+
+3. update npm
+
+$ npm install -g npm
+$ npm install -g corepack
+
+4. install nginx
+
+$ sudo apt install nginx
+
+5. download votera-server
+
+$ cd ~
+$ mkdir votera
+$ cd votera
+$ git clone https://github.com/bosagora/votera-server.git
+
+6. build votera-server
+
+$ cd ~/votera/votera-server
+$ yarn install
+$ yarn build
+
+아래부터는 다음 참조
+https://docs-v3.strapi.io/developer-docs/latest/setup-deployment-guides/deployment/hosting-guides/amazon-aws.html
+
+7. install pm2
+
+$ cd ~
+$ npm install -g pm2
+
+8. start pm2
+
+$ cd
+$ pm2 init
+$ vi ecosystem.config.js
+
+9. edit ecosystem.config.js
+
+다음과 같은 사항이면 된다.
+
+module.exports = {
+  apps : [{
+    name: 'votera-server',
+    cwd: '/home/ubuntu/votera/votera-server',
+    script: 'yarn',
+    args: 'start',
+    env: {
+      PUBSUB_ENABLE: 'true',
+      BOSAGORA_CHAINID: {BOSAGORA_CHAINID},
+      BOSAGORA_PROVIDER_URL: {BOSAGORA_PROVIDER_URL},
+      BOSAGORA_QUERY_URL: {BOSAGORA_QUERY_URL},
+      WALLET_VOTE_KEY: {WALLET_VOTE_KEY},
+      COMMONS_BUDGET_ADDRESS: {COMMONS_BUDGET_ADDRESS},
+      VOTERA_VOTE_ADDRESS: {VOTERA_VOTE_ADDRESS},
+      HMAC_KEY: {HMAC_KEY},
+      DATABASE_NAME: 'votera',
+      DATABASE_USERNAME: {DATABASE_USERNAME},
+      DATABASE_PASSWORD: {DATABASE_PASSWORD},
+      PROPOSAL_INFO_HOST: {PROPOSAL_INFO_HOST},
+    },
+  }],
+};
+
+10. start pm2
+
+$ cd ~
+$ pm2 start ecosystem.config.js
+
+11. register system startup script
+
+$ cd ~
+$ pm2 startup systemd
+
+copy/paste the generated command:
+
+$ sudo env PATH=$PATH:/home/centos/.nvm/versions/node/v14.20.1/bin /home/centos/.nvm/versions/node/v14.20.1/lib/node_modules/pm2/bin/pm2 startup systemd -u centos --hp /home/centos
+
+save the pm2 process list and enviornment
+
+$ pm2 save
+
+nginx 설정은 다음과 같이 한다. 
+만약 이 nginx 가 외부에 direct 접근이 되는 서버라고 하면 443 으로 SSL 설정을 하고
+만약 그렇지 않고 내부에서만 접근하는 서버라고 하면 8080 으로 해도 됨
