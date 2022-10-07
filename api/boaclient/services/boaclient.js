@@ -65,13 +65,10 @@ module.exports = {
                 commonsBudget.address !== agora.commonsBudgetAddress ||
                 voteraVote.address !== agora.voteraVoteAddress
             ) {
-                await strapi.services.agora.update(
-                    { id: agora.id },
-                    {
-                        commonsBudgetAddress: commonsBudget.address,
-                        voteraVoteAddress: voteraVote.address,
-                    },
-                );
+                await strapi.services.agora.createOrUpdate({
+                    commonsBudgetAddress: commonsBudget.address,
+                    voteraVoteAddress: voteraVote.address,
+                });
             }
         }
     },
