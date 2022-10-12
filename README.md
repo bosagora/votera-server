@@ -102,40 +102,46 @@ can use other upload provider of strapi
 
 config location: config/boaclient.js
 
-- chainId
-- providerUrl
+Bosagora Blockchain configuration
+
+- chainId : agora chain id
+- providerUrl : agora json rpc provider url
 - query
-  - url
-  - pageSize
-- signValidTime
+  - url : validator rpc query server url
+  - pageSize : validator query page size
+- signValidTime : signTypeData signature valid time interval
 - wallet
-  - path
-  - password
-  - voteKey
+  - path : votera server wallet json path
+  - password : votera server wallet password
+  - voteKey : votera server private key (wallet ignored)
 - contract
-  - commonsBudget
-  - voteraVote
-  - validatorSize
-  - revealBallotSize
-- transaction_wait
-- hmacKey
+  - commonsBudget : address of commons budget contract
+  - voteraVote : address of votera vote contract
+  - validatorSize : size of validators to contract call addvalidators
+  - revealBallotSize : size of ballot to contract call revealBallot
+- transaction_wait : provider waitForTransaction time (in milliseconds)
+- hmacKey : hmac key for voteBox seal key
 
 ### Votera configuration
 
 config location: config/votera.js
-- proposalInfoHost :
-- services :
-  - assess_begin_offset :
-  - assess_end_offset :
-  - vote_begin_offset :
-  - vote_end_offset :
-  - vote_open :
-  - can_withdraw_after :
+
+Votera service configuration
+
+- proposalInfoHost : proposal information url host
+- services
+  - assess_begin_offset : assess begin offset in seconds (from GMT+9)
+  - assess_end_offset : assess end date offset in seconds (from GMT+9)
+  - vote_begin_offset : vote begin date offset in seconds (from GMT+9)
+  - vote_end_offset : vote end date offset in seconds (from GMT+9)
+  - vote_open : vote open after vote_end
+  - can_withdraw_after : withdraw after vote end in seconds
 - report
-  - reportMinCount :
-  - reportPercent :
+  - reportMinCount : minimum count for report
+  - reportPercent : percent of member for report
 
 # Votera Strapi Configuration
+Votera Server (Using strapi server)
 
 ## Method for Authenticated permission
 
@@ -178,6 +184,60 @@ config location: config/votera.js
 |VoteraVoteAddress|address of votera vote contract|
 |ProviderUrl|address of blockchain provider|
 
+### .env variable
+|Name|Description|Default|
+|----|-----------|-------|
+|HOST|binding 할 서버 주소|0.0.0.0|
+|PORT|서비스 포트|1337|
+|DATABASE_HOST|mysql database host|localhost|
+|DATABASE_PORT|mysql database port|3306|
+|DATABASE_NAME|mysql database name||
+|DATABASE_USERNAME|mysql connect username||
+|DATABASE_PASSWORD|mysql connect password||
+|PUBSUB_ENABLE|pubsub 기능 on/off|false|
+|PUBSUB_ENDPOINT|pubsub endpoint url|/subscriptions|
+|PUBSUB_REDIS_ENABLE|redis를 이용한 pubsub on/off|false|
+|PUBSUB_REDIS_HOST|redis를 이용한 pubsub 일 경우 REDIS host||
+|PUBSUB_REDIS_PORT|redis를 이용한 pubsub 일 경우 REDIS port|6379|
+|PUBSUB_REDIS_USERNAME|redis 접속시 username||
+|PUBSUB_REDIS_PASSWORD|redis 접속 시 password||
+|CRON_REDIS_ENABLE|redlock를 이용한 cron batch job control on/off|false|
+|CRON_REDIS_HOST|redlock 이용할 경우 redis host||
+|CRON_REDIS_PORT|redlock 이용할 경우 redis port|6379|
+|CRON_REDIS_USERNAME|redlock 이용할 경우 redis username||
+|CRON_REDIS_PASSWORD|redlock 이용할 경우 redis password||
+|CRON_LOCK_TTL|cron lock time to live time|300|
+|CRON_FEED_EXPIRE_DAYS|delete feed after days|90|
+|ADMIN_JWT_SECRET|Admin JWT Token secret key||
+|AWS_S3_ACCESS_KEY_ID|AWS S3 Access Key||
+|AWS_S3_SECRET_ACCESS_KEY|AWS S3 access secret key||
+|AWS_S3_REGION|AWS S3 region||
+|AWS_S3_BUCKET|AWS S3 bucket||
+|BOSAGORA_CHAINID|agora chain id|2020|
+|BOSAGORA_PROVIDER_URL|agora json rpc provider url||
+|BOSAGORA_QUERY_URL|validator rpc query server url||
+|BOSAGORA_QUERY_PAGE_SIZE|validator query page size|1000|
+|BOSAGORA_SIGN_VALID_TIME|signTypeData signature valid time interval (in milliseconds)|600000|
+|WALLET_PATH|votera server wallet json path||
+|WALLET_PASSWORD|votera server wallet password||
+|WALLET_VOTE_KEY|votera server private key (wallet path and password) ignored)||
+|COMMONS_BUDGET_ADDRESS|address of commons budget contract||
+|VOTERA_VOTE_ADDRESS|address of votera vote contract||
+|VOTERA_VOTE_VALIDATOR_SIZE|size of validators to contract call addvalidators|100|
+|VOTERA_VOTE_REVEALBALLOT_SIZE|size of ballot to contract call revealBallot|100|
+|TRANSACTION_WAIT_TIME|provider waitForTransaction time (in milliseconds)|30000|
+|HMAC_KEY|hmac key for voteBox seal key||
+|PROPOSAL_INFO_HOST|proposal information url host||
+|ASSESS_BEGIN_OFFSET|assess begin offset in seconds (from GMT+9)|0|
+|ASSESS_END_OFFSET|assess end date offset in seconds (from GMT+9)|86399|
+|VOTE_BEGIN_OFFSET|vote begin date offset in seconds (from GMT+9)|0|
+|VOTE_END_OFFSET|vote end date offset in seconds (from GMT+9)|86399|
+|VOTE_OPEN_TIME|vote open after vote_end in seconds|30|
+|WITHDRAW_AFTER|withdraw after vote end in seconds|86400|
+|VOTERA_REPORT_MINCOUNT|minimum count for report|10|
+|VOTERA_REPORT_PERCENT|percent of member for report|10|
+|VOTERA_HOME_HOST|votera user page url for cors|http://localhost|
+|VOTERA_ADMIN_HOST|votera admin page url for cors|http://localhost:1337|
 
 ## Installation
 
@@ -279,3 +339,19 @@ $ pm2 save
 nginx 설정은 다음과 같이 한다. 
 만약 이 nginx 가 외부에 direct 접근이 되는 서버라고 하면 443 으로 SSL 설정을 하고
 만약 그렇지 않고 내부에서만 접근하는 서버라고 하면 8080 으로 해도 됨
+
+
+## S3 Configuration
+
+Block public access (bucket settings)
+uncheck Block all public access
+  - uncheck Block public access to buckets and objects granted through new access control lists (ACLs)
+  - uncheck Blick public access to buckets and objects granted through any access control lists (ACLs)
+  - check Block public access to buckets and objects granted through new public bucket or access point policies
+  - check Block public and cross-account access to buckets and objects through any public bucket or access point policies
+
+Edit Object Ownership
+
+select ACLs enabled
+select Bucket owner preferred
+

@@ -69,6 +69,10 @@ class CommonsStorage extends ethers.Contract {
         return this['getProposalData(bytes32)'](_proposalID, _overrides);
     }
 
+    maxVoteFee(_overrides) {
+        return this['maxVoteFee()'](_overrides);
+    }
+
     setFundProposalFeePermil(_value, _overrides) {
         return this['setFundProposalFeePermil(uint32)'](_value, _overrides);
     }
@@ -87,6 +91,10 @@ class CommonsStorage extends ethers.Contract {
 
     setVoterFee(_value, _overrides) {
         return this['setVoterFee(uint256)'](_value, _overrides);
+    }
+
+    setWithdrawDelayPeriod(_value, _overrides) {
+        return this['setWithdrawDelayPeriod(uint32)'](_value, _overrides);
     }
 
     setWithdrawn(_proposalID, _overrides) {
@@ -121,6 +129,10 @@ class CommonsStorage extends ethers.Contract {
         return this['voterFee()'](_overrides);
     }
 
+    withdrawDelayPeriod(_overrides) {
+        return this['withdrawDelayPeriod()'](_overrides);
+    }
+
     static factory(signer) {
         return new ethers.ContractFactory(CommonsStorage.ABI(), CommonsStorage.bytecode(), signer);
     }
@@ -143,11 +155,13 @@ class CommonsStorage extends ethers.Contract {
             'function finishVote(bytes32 _proposalID, uint256 _validatorSize, uint64[] _voteResult) returns (bool)',
             'function fundProposalFeePermil() view returns (uint32)',
             'function getProposalData(bytes32 _proposalID) view returns (tuple(uint8 state, uint8 proposalType, uint8 proposalResult, address proposer, string title, uint256 countingFinishTime, bool fundingAllowed, bool fundWithdrawn, uint64 start, uint64 end, uint64 startAssess, uint64 endAssess, bytes32 docHash, uint256 fundAmount, uint256 assessParticipantSize, uint64[] assessData, uint256 validatorSize, uint64[] voteResult, address voteAddress))',
+            'function maxVoteFee() view returns (uint256)',
             'function setFundProposalFeePermil(uint32 _value)',
             'function setFundingAllowed(bytes32 _proposalID, bool allow)',
             'function setSystemProposalFee(uint256 _value)',
             'function setVoteQuorumFactor(uint32 _value)',
             'function setVoterFee(uint256 _value)',
+            'function setWithdrawDelayPeriod(uint32 _value)',
             'function setWithdrawn(bytes32 _proposalID)',
             'function systemProposalFee() view returns (uint256)',
             'function transferOwnership(address newOwner)',
@@ -156,6 +170,7 @@ class CommonsStorage extends ethers.Contract {
             'function voteManager() view returns (address)',
             'function voteQuorumFactor() view returns (uint32)',
             'function voterFee() view returns (uint256)',
+            'function withdrawDelayPeriod() view returns (uint32)',
         ];
     }
 }

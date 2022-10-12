@@ -68,23 +68,23 @@ module.exports = {
                 schema,
                 onConnect: (context) => {
                     console.log('pubsub.connect.');
-                //     if (context.connectionParams.authToken) {
-                //         return strapi.plugins['users-permissions'].services.jwt
-                //             .verify(context.connectionParams.authToken)
-                //             .then((data) => {
-                //                 return strapi.plugins['users-permissions'].services.user.fetchAuthenticatedUser(
-                //                     data.id,
-                //                 );
-                //             })
-                //             .then((user) => {
-                //                 return { currentUser: user };
-                //             })
-                //             .catch((err) => {
-                //                 throw err;
-                //             });
-                //     }
+                    // if (context.connectionParams.authToken) {
+                    //     return strapi.plugins['users-permissions'].services.jwt
+                    //         .verify(context.connectionParams.authToken)
+                    //         .then((data) => {
+                    //             return strapi.plugins['users-permissions'].services.user.fetchAuthenticatedUser(
+                    //                 data.id,
+                    //             );
+                    //         })
+                    //         .then((user) => {
+                    //             return { currentUser: user };
+                    //         })
+                    //         .catch((err) => {
+                    //             throw err;
+                    //         });
+                    // }
 
-                //     throw new Error('missing auth token');
+                    // throw new Error('missing auth token');
                 },
             },
             wsServer,
