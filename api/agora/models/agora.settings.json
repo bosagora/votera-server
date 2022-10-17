@@ -35,6 +35,9 @@
     },
     "providerUrl": {
       "type": "string"
+    },
+    "blockExplorerUrl": {
+      "type": "string"
     }
   }
 }

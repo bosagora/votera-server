@@ -64,6 +64,7 @@ module.exports = {
             fundProposalFeePermil: String
             systemProposalFee: String
             voterFee: String
+            withdrawDelayPeriod: Int
         }
         input SubmitAssessInputData {
             proposalId: String!

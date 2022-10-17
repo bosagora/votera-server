@@ -209,7 +209,7 @@ async function createAdminMemberRole(activity, proposal) {
 async function createDiscussion(proposal) {
     const activity = await strapi.services.activity.createVoteraActivity({
         type: ENUM_ACTIVITY_TYPE_BOARD,
-        name: proposal?.name + '_DISCUSSION',
+        name: (proposal?.name || '').slice(0, 64) + '_DISCUSSION',
         status: ENUM_ACTIVITY_STATUS_OPEN,
         creator: proposal.creator,
     });
@@ -220,7 +220,7 @@ async function createDiscussion(proposal) {
 async function createNotice(proposal) {
     const activity = await strapi.services.activity.createVoteraActivity({
         type: ENUM_ACTIVITY_TYPE_BOARD,
-        name: proposal?.name + '_NOTICE',
+        name: (proposal?.name || '').slice(0, 64) + '_NOTICE',
         status: ENUM_ACTIVITY_STATUS_OPEN,
         creator: proposal.creator,
     });
@@ -1285,7 +1285,7 @@ module.exports = {
                 proposal,
             );
 
-            const receipt = await strapi.services.boaclient.waitForTransactionReceipt(transactionHash);
+            const receipt = await strapi.services.boaclient.getTransactionReceipt(transactionHash);
             if (receipt) {
                 if (transaction.blockNumber !== receipt.blockNumber || transaction.status !== receipt.status) {
                     transaction = await strapi.services.transaction.updateWithReceipt(receipt);
@@ -1302,7 +1302,7 @@ module.exports = {
 
             return { proposal, status: ENUM_FEE_STATUS_WAIT };
         } catch (error) {
-            strapi.log.warn(`checkPropopsalFee failed: proposalId=${proposal.proposalId}`);
+            strapi.log.warn(`checkPropsalFee failed: proposalId=${proposal.proposalId}`);
             strapi.log.warn(error);
             throw convertQueryOperationError(error);
         }

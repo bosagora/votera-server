@@ -71,6 +71,8 @@ module.exports = {
                 });
             }
         }
+
+        await this.getFeePolicy();
     },
 
     isInitialized() {
@@ -316,26 +318,35 @@ module.exports = {
     },
 
     async getFeePolicy() {
-        const storageContract = await this.getCommonsStorageContract();
-        const fundProposalFeePermil = await storageContract.fundProposalFeePermil({});
-        const systemProposalFee = await storageContract.systemProposalFee({});
-        const voterFee = await storageContract.voterFee({});
-        return {
-            fundProposalFeePermil: BigNumber.from(fundProposalFeePermil).toString(),
-            systemProposalFee: systemProposalFee.toString(),
-            voterFee: voterFee.toString(),
-        };
+        if (!this.feePolicy) {
+            const storageContract = await this.getCommonsStorageContract();
+            const fundProposalFeePermil = await storageContract.fundProposalFeePermil({});
+            const systemProposalFee = await storageContract.systemProposalFee({});
+            const voterFee = await storageContract.voterFee({});
+            const withdrawDelayPeriod = await storageContract.withdrawDelayPeriod({});
+            this.feePolicy = {
+                fundProposalFeePermil: BigNumber.from(fundProposalFeePermil).toString(),
+                systemProposalFee: systemProposalFee.toString(),
+                voterFee: voterFee.toString(),
+                withdrawDelayPeriod,
+            };
+        }
+        return this.feePolicy;
     },
 
     async getFundFeeAmount(amount) {
-        const storageContract = await this.getCommonsStorageContract();
-        const proposalFeePermil = await storageContract.fundProposalFeePermil({});
-        return BigNumber.from(proposalFeePermil).mul(amount).div(1000);
+        const feePolicy = await this.getFeePolicy();
+        return BigNumber.from(feePolicy.fundProposalFeePermil).mul(amount).div(1000);
+        // const storageContract = await this.getCommonsStorageContract();
+        // const proposalFeePermil = await storageContract.fundProposalFeePermil({});
+        // return BigNumber.from(proposalFeePermil).mul(amount).div(1000);
     },
 
     async getSystemProposalFee() {
-        const storageContract = await this.getCommonsStorageContract();
-        const systemProposalFee = await storageContract.systemProposalFee({});
-        return systemProposalFee;
+        const feePolicy = await this.getFeePolicy();
+        return BigNumber.from(feePolicy.systemProposalFee);
+        // const storageContract = await this.getCommonsStorageContract();
+        // const systemProposalFee = await storageContract.systemProposalFee({});
+        // return systemProposalFee;
     },
 };
