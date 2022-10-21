@@ -13,7 +13,9 @@ module.exports = {
             return null;
         }
 
-        const userFeed = await strapi.query('user-feed').findOne({ id: ctx.state.user.user_feed });
+        const { user_feed } = ctx.state.user;
+
+        const userFeed = await strapi.query('user-feed').findOne({ id: user_feed.id || user_feed });
         return sanitizeEntity(userFeed, { model: strapi.models['user-feed'] });
-    }
+    },
 };

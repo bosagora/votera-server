@@ -275,9 +275,13 @@ function makePayloadComment(activity, memberName, type) {
     };
 }
 
+function getUserFeedTarget(userFeed) {
+    return userFeed.id || userFeed;
+}
+
 async function saveFeeds(userFeeds, feed) {
     const targets = userFeeds.map((userFeed) => {
-        return { ...feed, target: userFeed.user.user_feed };
+        return { ...feed, target: getUserFeedTarget(userFeed.user.user_feed) };
     });
     if (!insertManyFeeds) {
         chooseModelFunction();

@@ -20,7 +20,7 @@ module.exports = {
         }
 
         const userFeed = await strapi.services['user-feed'].updateUserPushToken(
-            ctx.state.user.user_feed,
+            ctx.state.user.user_feed.id || ctx.state.user.user_feed,
             pushId,
             pushToken,
             isActive,
@@ -43,7 +43,7 @@ module.exports = {
         }
 
         const userFeed = await strapi.services['user-feed'].updateUserAlarmStatus(
-            ctx.state.user.user_feed.id,
+            ctx.state.user.user_feed.id || ctx.state.user.user_feed,
             alarmStatus,
         );
 

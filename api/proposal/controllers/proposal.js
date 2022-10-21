@@ -22,6 +22,10 @@ function checkCreateProposalParameter(proposal, ctx) {
     }
 }
 
+function getUserFeedId(userFeed) {
+    return userFeed.id || userFeed;
+}
+
 module.exports = {
     async findById(ctx) {
         const { _proposalId } = ctx.params;
@@ -72,7 +76,7 @@ module.exports = {
 
         if (proposal) {
             strapi.services.follow
-                .createMyProposal(ctx.state.user.user_feed, proposal.id)
+                .createMyProposal(getUserFeedId(ctx.state.user.user_feed), proposal.id)
                 .then(() => {
                     if (needCreateNotification(proposal.status)) {
                         strapi.services.notification.onProposalCreated(proposal).catch((err) => {
@@ -105,12 +109,14 @@ module.exports = {
         if (result?.proposal) {
             result.proposal = sanitizeEntity(result.proposal, { model: strapi.models.proposal });
 
-            strapi.services.follow.createJoinProposal(ctx.state.user.user_feed, result.proposal.id).catch((err) => {
-                strapi.log.warn(
-                    `follow.createJoinProposal failed: proposal.id=${result.proposal.id} member.id=${checkMember.member.id}`,
-                );
-                strapi.log.warn(err);
-            });
+            strapi.services.follow
+                .createJoinProposal(getUserFeedId(ctx.state.user.user_feed), result.proposal.id)
+                .catch((err) => {
+                    strapi.log.warn(
+                        `follow.createJoinProposal failed: proposal.id=${result.proposal.id} member.id=${checkMember.member.id}`,
+                    );
+                    strapi.log.warn(err);
+                });
         }
 
         return result;

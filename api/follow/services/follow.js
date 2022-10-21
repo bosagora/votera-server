@@ -59,5 +59,5 @@ module.exports = {
             type: 'POST',
         });
         return result;
-    }
+    },
 };
