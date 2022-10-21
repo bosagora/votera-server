@@ -8,6 +8,27 @@ async function checkWaitingTransaction(transaction) {
 }
 
 module.exports = {
+    async updateReceipt(hash) {
+        let transaction = await strapi.query('transaction').findOne({ transactionHash: hash });
+        if (!transaction) {
+            throw strapi.errors.notFound('NotFound transaction');
+        }
+        if (transaction.blockNumber !== 0) {
+            return { status: transaction.status };
+        }
+        const receipt = await strapi.services.boaclient.waitForTransactionReceipt(hash);
+        if (!receipt) {
+            throw strapi.errors.badImplementation('transaction error');
+        }
+
+        transaction = await strapi.query('transaction').findOne({ transactionHash: hash });
+        if (transaction.blockNumber === receipt.blockNumber && transaction.status === receipt.status) {
+            return { status: transaction.status };
+        }
+
+        await this.updateWithReceipt(receipt);
+        return { status: receipt.status };
+    },
     async updateWithReceipt(receipt) {
         if (!receipt) return null;
         const transaction = await strapi.query('transaction').update(
@@ -32,6 +53,7 @@ module.exports = {
     // info : { hash, method }
     async findOrCreateWithProposal(info, proposal) {
         if (!info?.hash) throw strapi.errors.badRequest('missing parameter');
+        let created = false;
         let transaction = await strapi.query('transaction').findOne({ transactionHash: info.hash });
         if (!transaction) {
             transaction = await strapi.query('transaction').create({
@@ -40,10 +62,11 @@ module.exports = {
                 proposal: proposal.id,
                 method: info.method,
             });
+            created = true;
         } else if (transaction.method !== info.method || transaction.proposal.id !== proposal.id) {
             throw strapi.errors.badRequest('inconsistent parameter');
         }
-        return transaction;
+        return { transaction, created };
     },
     async findOrCreateWithPost(info, post) {
         if (!info?.hash) throw strapi.errors.badRequest('missing parameter');

@@ -59,10 +59,10 @@ module.exports = {
                 ballot,
             );
 
-            const receipt = await strapi.services.boaclient.getTransactionReceipt(transactionHash);
-            if (receipt) {
-                await strapi.services.transaction.updateWithReceipt(receipt);
-            }
+            strapi.services.transaction.updateReceipt(transactionHash).catch((error) => {
+                strapi.log.warn(`submitBallot.updateTransaction failed transactionHash=${transactionHash}`);
+                strapi.log.warn(error);
+            });
         }
 
         return ballot;

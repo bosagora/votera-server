@@ -4,6 +4,12 @@ const { RedisPubSub } = require('graphql-redis-subscriptions');
 const Redis = require('ioredis');
 const { WebSocketServer } = require('ws');
 const { useServer } = require('graphql-ws/lib/use/ws');
+const stringify = require('fast-json-stable-stringify');
+
+function simplifyVariable(variable) {
+    const { file, files, ...rest } = variable;
+    return stringify(rest);
+}
 
 const apolloPlugin = {
     async serverWillStart() {
@@ -12,6 +18,24 @@ const apolloPlugin = {
                 if (strapi?.services?.pubsub?.serverCleanup) {
                     await strapi.services?.pubsub?.serverCleanup.dispose();
                 }
+            },
+        };
+    },
+    requestDidStart(requestContext) {
+        if (requestContext.request.operationName === 'IntrospectionQuery') {
+            return;
+        }
+
+        const start = Date.now();
+
+        const simpleVariable = requestContext.request.variables
+            ? simplifyVariable(requestContext.request.variables)
+            : '';
+
+        return {
+            willSendResponse(context) {
+                const elapsed = Date.now() - start;
+                strapi.log.debug(`${requestContext.request.operationName} (${elapsed} ms) ${simpleVariable}`);
             },
         };
     },

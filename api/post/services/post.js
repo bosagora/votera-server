@@ -37,7 +37,7 @@ async function processReportOnPost(postId, proposalId) {
             return post;
         }
 
-        if (post.reportCount < strapi.config.votera.reportMinCount) {
+        if (post.reportCount < strapi.config.votera.report.reportMinCount) {
             return post;
         }
 
@@ -47,23 +47,28 @@ async function processReportOnPost(postId, proposalId) {
             return post;
         }
 
-        if (post.reportCount < Math.floor((strapi.config.votera.reportPercent * userCount) / 100)) {
+        if (post.reportCount < Math.floor((strapi.config.votera.report.reportPercent * userCount) / 100)) {
             return post;
         }
 
         post = await strapi.query('post').update({ id: post.id }, { status: ENUM_POST_STATUS_DELETED });
 
-        await strapi.query('interaction').update(
-            { type: ENUM_INTERACTION_TYPE_REPORT_POST, post: postId },
-            {
-                action: [
-                    {
-                        __component: 'interaction.report',
-                        status: 'RESOLVED',
-                    },
-                ],
-            },
-        );
+        try {
+            await strapi.query('interaction').update(
+                { type: ENUM_INTERACTION_TYPE_REPORT_POST, post: postId },
+                {
+                    action: [
+                        {
+                            __component: 'interaction.report',
+                            status: 'RESOLVED',
+                        },
+                    ],
+                },
+            );
+        } catch (e1) {
+            strapi.log.warn(`post.processReportOnPost update interaction failed: post.id = ${postId}`);
+            strapi.log.warn(e1);
+        }
 
         return post;
     } catch (err) {
@@ -88,28 +93,32 @@ async function processRestoreOnPost(postId, proposalId) {
             return post;
         }
 
-        const userReportCount = Math.floor((strapi.config.votera.reportPercent * userCount) / 100);
-        if (post.reportCount >= strapi.config.votera.reportMinCount && post.reportCount >= userReportCount) {
+        const userReportCount = Math.floor((strapi.config.votera.report.reportPercent * userCount) / 100);
+        if (post.reportCount >= strapi.config.votera.report.reportMinCount && post.reportCount >= userReportCount) {
             return post;
         }
 
         post = await strapi.query('post').update({ id: post.id }, { status: ENUM_POST_STATUS_OPEN });
 
-        await strapi.query('interaction').update(
-            { type: ENUM_INTERACTION_TYPE_REPORT_POST, post: postId },
-            {
-                action: [
-                    {
-                        __component: 'interaction.report',
-                        status: 'UNRESOLVED',
-                    },
-                ],
-            },
-        );
-
+        try {
+            await strapi.query('interaction').update(
+                { type: ENUM_INTERACTION_TYPE_REPORT_POST, post: postId },
+                {
+                    action: [
+                        {
+                            __component: 'interaction.report',
+                            status: 'UNRESOLVED',
+                        },
+                    ],
+                },
+            );
+        } catch (e1) {
+            strapi.log.warn(`post.processRestoreOnPost update interfaction failed: post.id = ${postId}`);
+            strapi.log.warn(e1);
+        }
         return post;
     } catch (err) {
-        strapi.log.warn(`post.processReportOnPost failed: post.id = ${postId}`);
+        strapi.log.warn(`post.processRestoreOnPost failed: post.id = ${postId}`);
         strapi.log.warn(err);
         throw convertQueryOperationError(err);
     }

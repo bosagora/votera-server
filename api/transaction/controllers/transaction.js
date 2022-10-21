@@ -1,8 +1,9 @@
 'use strict';
 
-/**
- * Read the documentation (https://strapi.io/documentation/developer-docs/latest/development/backend-customization.html#core-controllers)
- * to customize this controller
- */
-
-module.exports = {};
+module.exports = {
+    async updateReceipt(ctx) {
+        const { hash } = ctx.request.body;
+        if (!hash) return ctx.badRequest('missing parameter');
+        return await strapi.services.transaction.updateReceipt(hash);
+    },
+};

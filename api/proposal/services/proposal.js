@@ -26,6 +26,7 @@ const {
     ENUM_FEE_STATUS_INVALID,
     ENUM_FEE_STATUS_EXPIRED,
     ENUM_FEE_STATUS_WAIT,
+    ENUM_FEE_STATUS_ERROR,
     ENUM_PROPOSAL_STATUS_PENDING_VOTE,
     ENUM_PROPOSAL_STATUS_VOTE,
     ENUM_PROPOSAL_STATUS_CLOSED,
@@ -329,6 +330,16 @@ async function waitForProposalTransaction(state, proposal, method) {
     return await strapi.services.boaclient.getVoteraVoteState(proposal.proposalId);
 }
 
+async function waitForTransaction(transactionInfo, proposal) {
+    await strapi.services.transaction.findOrCreateWithProposal(transactionInfo, proposal);
+    const receipt = await strapi.services.boaclient.waitForTransactionReceipt(transactionInfo.hash);
+    if (!receipt) {
+        return null;
+    }
+    await strapi.services.transaction.updateWithReceipt(receipt);
+    return await strapi.services.boaclient.getVoteraVoteState(proposal.proposalId);
+}
+
 async function waitForProposalMiningTransaction(state, proposal, method) {
     const txs = findMiningTransaction(proposal, method);
     if (!txs || txs.length === 0) {
@@ -342,6 +353,19 @@ async function waitForProposalMiningTransaction(state, proposal, method) {
         }),
     );
     return await strapi.services.boaclient.getVoteraVoteState(proposal.proposalId);
+}
+
+async function waitForMultiTransaction(txHashs) {
+    if (!txHashs || txHashs.length === 0) {
+        return;
+    }
+    await Promise.all(
+        txHashs.map((txHash) => {
+            return strapi.services.boaclient.waitForTransactionReceipt(txHash).then((receipt) => {
+                return strapi.services.transaction.updateWithReceipt(receipt);
+            });
+        }),
+    );
 }
 
 async function changeCreatedProposalToStatus(proposal, status) {
@@ -506,10 +530,11 @@ async function processProposalStatusCreated(id) {
                 proposal.vote_open,
                 getProposalInfoUrl(proposal),
             );
-            await strapi.services.transaction.findOrCreateWithProposal(transactionInfo, proposal);
-
-            voteraState = await strapi.services.boaclient.getVoteraVoteState(proposal.proposalId);
-            if (voteraState === ENUM_VOTE_STATE_CREATED) {
+            voteraState = await waitForTransaction(transactionInfo, proposal);
+            if (voteraState === ENUM_VOTE_STATE_CREATED || voteraState === null) {
+                strapi.log.warn(
+                    `processProposalStatusCreated proposal.id=${proposal.id} stopAt setupVoteInfo state=${voteraState}`,
+                );
                 return null;
             }
         }
@@ -524,7 +549,12 @@ async function processProposalStatusCreated(id) {
         if (voteraState === ENUM_VOTE_STATE_SETTING) {
             const params = await getProposalAddValidatorsParams(id);
             // it should be called sequentially because of finalized parameter
-            for (let i = 0; i < params.length; i += 1) {
+            if (params.length === 0) {
+                strapi.log.warn(`processProposalStatusCreated.Stoped proposa.id=${id} EMPTY_VALIDATOR`);
+                return null;
+            }
+            const txHashs = [];
+            for (let i = 0; i < params.length - 1; i += 1) {
                 const param = params[i];
                 const transInfo = await strapi.services.boaclient.addValidators(
                     param.proposalId,
@@ -532,9 +562,21 @@ async function processProposalStatusCreated(id) {
                     param.finalized,
                 );
                 await strapi.services.transaction.findOrCreateWithProposal(transInfo, proposal);
+                txHashs.push(transInfo.hash);
             }
-            voteraState = await strapi.services.boaclient.getVoteraVoteState(proposal.proposalId);
-            if (voteraState === ENUM_VOTE_STATE_SETTING) {
+            await waitForMultiTransaction(txHashs);
+
+            const lastParam = params[params.length - 1];
+            const lastTransInfo = await strapi.services.boaclient.addValidators(
+                lastParam.proposalId,
+                lastParam.validators,
+                lastParam.finalized,
+            );
+            voteraState = await waitForTransaction(lastTransInfo, proposal);
+            if (voteraState === ENUM_VOTE_STATE_SETTING || voteraState === null) {
+                strapi.log.warn(
+                    `processProposalStatusCreated proposal.id=${proposal.id} stopAt addValidators state=${voteraState}`,
+                );
                 return null;
             }
         }
@@ -664,8 +706,14 @@ async function processProposalStatusAssess(id) {
 
         if (voteraState === ENUM_VOTE_STATE_ASSESSING) {
             const transactionInfo = await strapi.services.boaclient.countAssess(proposal.proposalId);
-            await strapi.services.transaction.findOrCreateWithProposal(transactionInfo, proposal);
+            voteraState = await waitForTransaction(transactionInfo, proposal);
             await strapi.services.validator.syncAssessValidatorList(proposal);
+            if (voteraState === ENUM_VOTE_STATE_ASSESSING || voteraState === null) {
+                strapi.log.warn(
+                    `processProposalStatusAssess proposal.id=${proposal.id} stopAt countAssess state=${voteraState}`,
+                );
+                return null;
+            }
         }
     }
 
@@ -814,9 +862,11 @@ async function processProposalStatusVote(id) {
 
         const ballotCount = await strapi.services.boaclient.getBallotCount(proposal.proposalId);
         const pageMax = Math.ceil(ballotCount / pageSize);
+        const txHashs = [];
         for (let i = 0; i < pageMax; i += 1) {
             const revealBallots = await selectProposalRevealBallots(proposal.id, i, pageSize);
             if (!revealBallots) {
+                // it means it's not time for revealing vote
                 return null;
             }
 
@@ -833,6 +883,7 @@ async function processProposalStatusVote(id) {
                 );
 
                 await strapi.services.transaction.findOrCreateWithProposal(transInfo, proposal);
+                txHashs.push(transInfo.hash);
 
                 for (let j = 0; j < validators.length; j += 1) {
                     const address = validators[j].toLowerCase();
@@ -843,15 +894,22 @@ async function processProposalStatusVote(id) {
             }
 
             if (revealBallots.notFound) {
+                strapi.log.error(`processProposalStatusVote proposal.id=${proposal.id} MissingBallotFound`);
                 throw new Error(`MissingBallotFound proposalId:${proposal.proposalId}`);
             }
         }
 
-        const transInfo = await strapi.services.boaclient.countVote(proposal.proposalId);
-        await strapi.services.transaction.findOrCreateWithProposal(transInfo, proposal);
-        await strapi.services.validator.syncBallotValidatorList(proposal);
+        await waitForMultiTransaction(txHashs);
 
-        voteraState = await strapi.services.boaclient.getVoteraVoteState(proposal.proposalId);
+        const transInfo = await strapi.services.boaclient.countVote(proposal.proposalId);
+        voteraState = await waitForTransaction(transInfo, proposal);
+        await strapi.services.validator.syncBallotValidatorList(proposal);
+        if (voteraState === ENUM_VOTE_STATE_RUNNING || voteraState === null) {
+            strapi.log.warn(
+                `processProposalStatusVote proposal.id=${proposal.id} stopAt countVote voteraState=${voteraState}`,
+            );
+            return null;
+        }
     }
 
     if (voteraState === ENUM_VOTE_STATE_FINISHED) {
@@ -1280,7 +1338,7 @@ module.exports = {
         try {
             const methodName =
                 proposal.type === ENUM_PROPOSAL_TYPE_BUSINESS ? 'createFundProposal' : 'createSystemProposal';
-            let transaction = await strapi.services.transaction.findOrCreateWithProposal(
+            let { transaction, created } = await strapi.services.transaction.findOrCreateWithProposal(
                 { hash: transactionHash, method: methodName },
                 proposal,
             );
@@ -1290,17 +1348,63 @@ module.exports = {
                 if (transaction.blockNumber !== receipt.blockNumber || transaction.status !== receipt.status) {
                     transaction = await strapi.services.transaction.updateWithReceipt(receipt);
                 }
+
+                const isExist = await strapi.services.boaclient.isCommonsBudgetProposalExist(proposal.proposalId);
+                if (isExist) {
+                    processProposalStatusCreated(proposal.id)
+                        .then((updated) => {
+                            strapi.log.debug(
+                                `checkProposalFee.waitFor end proposalId=${proposal.proposalId} status=${updated?.status}`,
+                            );
+                        })
+                        .catch((error) => {
+                            strapi.log.warn(`checkPropsalFee failed: proposalId=${proposal.proposalId}`);
+                            strapi.log.warn(error);
+                        });
+                    return { proposal: proposal, status: ENUM_FEE_STATUS_PAID };
+                }
+
+                return { proposal, status: receipt.status === 0 ? ENUM_FEE_STATUS_ERROR : ENUM_FEE_STATUS_WAIT };
             }
 
-            const isExist = await strapi.services.boaclient.isCommonsBudgetProposalExist(proposal.proposalId);
-            if (isExist) {
-                const updatedProposal = await processProposalStatusCreated(proposal.id);
-                return { proposal: updatedProposal ? updatedProposal : proposal, status: ENUM_FEE_STATUS_PAID };
-            } else if (!receipt) {
-                return { proposal, status: ENUM_FEE_STATUS_MINING };
+            if (created) {
+                const proposalId = proposal.proposalId;
+                const id = proposal.id;
+                strapi.log.debug(`checkProposalFee.waitFor 1=waitForTransactionReceipt proposalId=${proposalId}`);
+                strapi.services.boaclient
+                    .waitForTransactionReceipt(transactionHash)
+                    .then((receipt) => {
+                        strapi.log.debug(`checkProposalFee.waitFor 2=updateWithReceipt proposalId=${proposalId}`);
+                        return strapi.services.transaction.updateWithReceipt(receipt);
+                    })
+                    .then((transaction) => {
+                        if (transaction) {
+                            strapi.log.debug(
+                                `checkProposalFee.waitFor 3=isCommonsBudgetProposalExist proposalId=${proposalId}`,
+                            );
+                            return strapi.services.boaclient.isCommonsBudgetProposalExist(proposalId);
+                        }
+                    })
+                    .then((result) => {
+                        if (result) {
+                            strapi.log.debug(
+                                `checkProposalFee.waitFor 4=processProposalStatusCreated proposalId=${proposalId}`,
+                            );
+                            return processProposalStatusCreated(id);
+                        }
+                    })
+                    .then((updated) => {
+                        strapi.log.debug(
+                            `checkProposalFee.waitFor end proposalId=${proposalId} status=${updated?.status}`,
+                        );
+                    })
+                    .catch((error) => {
+                        strapi.log.warn(`checkPropsalFee failed: proposalId=${proposal.proposalId}`);
+                        strapi.log.warn(error);
+                    });
             }
 
-            return { proposal, status: ENUM_FEE_STATUS_WAIT };
+            return { proposal, status: ENUM_FEE_STATUS_MINING };
         } catch (error) {
             strapi.log.warn(`checkPropsalFee failed: proposalId=${proposal.proposalId}`);
             strapi.log.warn(error);
@@ -1378,10 +1482,10 @@ module.exports = {
                 post,
             );
 
-            const receipt = await strapi.services.boaclient.getTransactionReceipt(transactionHash);
-            if (receipt) {
-                await strapi.services.transaction.updateWithReceipt(receipt);
-            }
+            strapi.services.transaction.updateReceipt(transactionHash).catch((error) => {
+                strapi.log.warn(`submitAssess.updateTransaction failed transaionHash=${transactionHash}`);
+                strapi.log.warn(error);
+            });
         }
 
         return post;

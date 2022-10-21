@@ -32,8 +32,6 @@ function isValidSignTime(signTime) {
     return signDiff < strapi.config.boaclient.signValidTime;
 }
 
-const testValidators = ['0x81e68c1b1e8cf8047371020c38102274b7ce62d9'];
-
 function getId(obj) {
     return obj.id !== undefined ? obj.id : obj;
 }
@@ -62,9 +60,6 @@ async function addBulkValidator(validators, id) {
 
 module.exports = {
     async isValidator(address) {
-        if (testValidators.includes(address)) {
-            return { valid: true, publicKey: testValidators[0] };
-        }
         const url = `${strapi.config.boaclient.query.url}/validator/${address}`;
         const response = await axios.get(url);
         const data = response.data;
@@ -76,9 +71,6 @@ module.exports = {
         }
     },
     async getValidatorPublickey(address) {
-        if (testValidators.includes(address)) {
-            return address;
-        }
         const url = `${strapi.config.boaclient.query.url}/validator/${address}`;
         const response = await axios.get(url);
         const data = response.data;
@@ -116,12 +108,6 @@ module.exports = {
             if (header.page_index >= header.total_page) {
                 break;
             }
-        }
-        if (testValidators && testValidators.length > 0) {
-            addBulkValidator(
-                testValidators.map((v) => ({ address: v, pubkey: v })),
-                id,
-            );
         }
     },
     async getSignTypeDomain(name) {

@@ -154,6 +154,7 @@ Votera Server (Using strapi server)
 |Application|Member-Role|count,find,findone|
 |Application|Post|activityPosts, count, create, find, findone, listPosts, postComments, postStatus, readArticle, reportPost, restorePost, togglePostLike, update|
 |Application|Proposal|assessResult, checkProposalFee, count, create, feePolicy, find, findbyid, findinfo, findone, joinProposal, listProposal, proposalFee, statusById, submitAssess, voteCount, voteStatus|
+|Application|Transaction|updateReceipt|
 |Application|Validator|count,find,findone,getsignindomain,getsignupdomain,isvalidator,listAssessValidators,listBallotValidators|
 |Application|Version|find|
 |Upload|Upload|upload|
@@ -168,6 +169,7 @@ Votera Server (Using strapi server)
 |Application|MemberRole|count, find, findone|
 |Application|Post|activityPosts, count, find, findone, listPosts, postComments, postStatus|
 |Application|Proposal|assessResult, checkProposalFee, count, feePolicy, find, findbyid, findInfo, findone, listProposal, proposalFee, statusById, voteCount, voteStatus|
+|Application|Transaction|updateReceipt|
 |Application|Validator|count, find, findone, getsignindomain,getsignupdomain,isvalidator,listAssessValidators, listBallotValidators|
 |Application|Version|find|
 |Users-Permissions|Auth|callback, connect, emailconfirmation, forgotpassword, register, resetpassword|
