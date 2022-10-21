@@ -1,6 +1,7 @@
 'use strict';
 
 const { sanitizeEntity } = require('strapi-utils');
+const { getValueId } = require('../../../src/util/strapi_helper');
 
 module.exports = {
     async updateUserPushToken(ctx) {
@@ -20,7 +21,7 @@ module.exports = {
         }
 
         const userFeed = await strapi.services['user-feed'].updateUserPushToken(
-            ctx.state.user.user_feed.id || ctx.state.user.user_feed,
+            getValueId(ctx.state.user.user_feed),
             pushId,
             pushToken,
             isActive,
@@ -43,7 +44,7 @@ module.exports = {
         }
 
         const userFeed = await strapi.services['user-feed'].updateUserAlarmStatus(
-            ctx.state.user.user_feed.id || ctx.state.user.user_feed,
+            getValueId(ctx.state.user.user_feed),
             alarmStatus,
         );
 

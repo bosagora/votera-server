@@ -199,6 +199,10 @@ async function insertManyFeedsBookshelf(targets) {
     await knex('feeds').insert(targets);
 }
 
+function getValueId(value) {
+    return value.id || value;
+}
+
 async function existOtherParticipatedPost(post) {
     if (!post.id) {
         return false;
@@ -208,9 +212,9 @@ async function existOtherParticipatedPost(post) {
 
     const founds = await strapi.query('post').find({
         id_ne: post.id,
-        activity: post.activity,
+        activity: getValueId(post.activity),
         type: post.type,
-        writer: post.writer.id,
+        writer: getValueId(post.writer),
         status: ENUM_POST_STATUS_OPEN,
     });
     return founds && founds.length > 0;
@@ -263,4 +267,5 @@ module.exports = {
     existOtherParticipatedPost,
     connectionIsMongoose,
     sanitizeActivityInGroupList,
+    getValueId,
 };

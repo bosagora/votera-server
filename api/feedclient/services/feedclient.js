@@ -4,6 +4,7 @@ const {
     connectionIsMongoose,
     insertManyFeedsMongoose,
     insertManyFeedsBookshelf,
+    getValueId,
 } = require('../../../src/util/strapi_helper');
 
 let insertManyFeeds;
@@ -238,7 +239,7 @@ function makeFeedsComment(activity, memberName, type) {
             userName: memberName,
         },
         navigation: {
-            activityId: activity,
+            activityId: getValueId(activity),
         },
         isRead: false,
     };
@@ -275,13 +276,9 @@ function makePayloadComment(activity, memberName, type) {
     };
 }
 
-function getUserFeedTarget(userFeed) {
-    return userFeed.id || userFeed;
-}
-
 async function saveFeeds(userFeeds, feed) {
     const targets = userFeeds.map((userFeed) => {
-        return { ...feed, target: getUserFeedTarget(userFeed.user.user_feed) };
+        return { ...feed, target: getValueId(userFeed.user.user_feed) };
     });
     if (!insertManyFeeds) {
         chooseModelFunction();

@@ -2,13 +2,10 @@
 
 const { parseMultipartData, sanitizeEntity } = require('strapi-utils');
 const { ENUM_POST_TYPE_SURVEY_RESPONSE, ENUM_POST_TYPE_POLL_RESPONSE } = require('../../../src/types/post');
+const { getValueId } = require('../../../src/util/strapi_helper');
 
 function sanitizePost(entity) {
     return sanitizeEntity(entity, { model: strapi.models.post });
-}
-
-function getUserFeedId(userFeed) {
-    return userFeed.id || userFeed;
 }
 
 module.exports = {
@@ -47,7 +44,7 @@ module.exports = {
             post = await strapi.services.post.create(ctx.request.body);
         }
         if (post && post.type !== ENUM_POST_TYPE_SURVEY_RESPONSE && post.type !== ENUM_POST_TYPE_POLL_RESPONSE) {
-            strapi.services.follow.createMyComment(getUserFeedId(ctx.state.user.user_feed), post.id).catch((err) => {
+            strapi.services.follow.createMyComment(getValueId(ctx.state.user.user_feed), post.id).catch((err) => {
                 strapi.log.warn(`follow.createMyComment failed: post.id = ${post.id}`);
                 strapi.log.warn(err);
             });

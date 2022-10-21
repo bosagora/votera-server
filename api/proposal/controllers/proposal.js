@@ -5,6 +5,7 @@ const {
     ENUM_PROPOSAL_TYPE_SYSTEM,
     needCreateNotification,
 } = require('../../../src/types/proposal');
+const { getValueId } = require('../../../src/util/strapi_helper');
 
 function checkCreateProposalParameter(proposal, ctx) {
     if (!proposal.name || !proposal.type || !proposal.votePeriod || !proposal.proposer_address) {
@@ -20,10 +21,6 @@ function checkCreateProposalParameter(proposal, ctx) {
     } else if (proposal.type !== ENUM_PROPOSAL_TYPE_SYSTEM) {
         return ctx.throw(400, 'unknown proposal type');
     }
-}
-
-function getUserFeedId(userFeed) {
-    return userFeed.id || userFeed;
 }
 
 module.exports = {
@@ -76,7 +73,7 @@ module.exports = {
 
         if (proposal) {
             strapi.services.follow
-                .createMyProposal(getUserFeedId(ctx.state.user.user_feed), proposal.id)
+                .createMyProposal(getValueId(ctx.state.user.user_feed), proposal.id)
                 .then(() => {
                     if (needCreateNotification(proposal.status)) {
                         strapi.services.notification.onProposalCreated(proposal).catch((err) => {
@@ -110,7 +107,7 @@ module.exports = {
             result.proposal = sanitizeEntity(result.proposal, { model: strapi.models.proposal });
 
             strapi.services.follow
-                .createJoinProposal(getUserFeedId(ctx.state.user.user_feed), result.proposal.id)
+                .createJoinProposal(getValueId(ctx.state.user.user_feed), result.proposal.id)
                 .catch((err) => {
                     strapi.log.warn(
                         `follow.createJoinProposal failed: proposal.id=${result.proposal.id} member.id=${checkMember.member.id}`,
