@@ -1,0 +1,32 @@
+{
+  "kind": "collectionType",
+  "collectionName": "pushes",
+  "info": {
+    "name": "push",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": [
+      "createdAt",
+      "updatedAt"
+    ],
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "token": {
+      "type": "string",
+      "private": true,
+      "unique": true,
+      "required": true
+    },
+    "isActive": {
+      "type": "boolean",
+      "default": true
+    },
+    "user_feed": {
+      "via": "pushes",
+      "model": "user-feed"
+    }
+  }
+}

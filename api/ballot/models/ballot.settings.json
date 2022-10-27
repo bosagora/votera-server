@@ -1,0 +1,37 @@
+{
+  "kind": "collectionType",
+  "collectionName": "ballots",
+  "info": {
+    "name": "Ballot",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": [
+      "createdAt",
+      "updatedAt"
+    ],
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "member": {
+      "model": "member"
+    },
+    "cipherText": {
+      "type": "text"
+    },
+    "commitment": {
+      "type": "string",
+      "unique": true,
+      "required": true
+    },
+    "proposal": {
+      "model": "proposal"
+    },
+    "transactions": {
+      "collection": "transaction",
+      "via": "ballot"
+    }
+  }
+}
