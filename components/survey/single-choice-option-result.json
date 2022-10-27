@@ -1,0 +1,19 @@
+{
+  "collectionName": "components_survey_single_choice_option_results",
+  "info": {
+    "name": "singleChoiceOptionResult",
+    "icon": "list-ol"
+  },
+  "options": {},
+  "attributes": {
+    "sequence": {
+      "type": "integer"
+    },
+    "value": {
+      "type": "integer"
+    },
+    "count": {
+      "type": "integer"
+    }
+  }
+}

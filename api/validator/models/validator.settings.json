@@ -1,0 +1,47 @@
+{
+  "kind": "collectionType",
+  "collectionName": "validators",
+  "info": {
+    "name": "Validator",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": [
+      "createdAt",
+      "updatedAt"
+    ],
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "address": {
+      "type": "string",
+      "unique": false
+    },
+    "publicKey": {
+      "type": "string"
+    },
+    "proposal": {
+      "via": "validators",
+      "model": "proposal"
+    },
+    "assessUpdate": {
+      "type": "integer"
+    },
+    "ballotUpdate": {
+      "type": "integer"
+    },
+    "hasAssess": {
+      "type": "boolean",
+      "private": true
+    },
+    "hasBallot": {
+      "type": "boolean",
+      "private": true
+    },
+    "choice": {
+      "type": "integer"
+    }
+  }
+}

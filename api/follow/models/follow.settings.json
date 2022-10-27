@@ -1,0 +1,37 @@
+{
+  "kind": "collectionType",
+  "collectionName": "follows",
+  "info": {
+    "name": "follow",
+    "description": ""
+  },
+  "options": {
+    "increments": true,
+    "timestamps": [
+      "createdAt",
+      "updatedAt"
+    ],
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "target": {
+      "type": "string",
+      "index": true
+    },
+    "isFeedActive": {
+      "type": "boolean",
+      "default": true
+    },
+    "type": {
+      "type": "enumeration",
+      "enum": [
+        "PROPOSAL_CREATE",
+        "PROPOSAL_JOIN",
+        "POST"
+      ]
+    },
+    "user_feed": {
+      "model": "user-feed"
+    }
+  }
+}

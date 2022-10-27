@@ -1,0 +1,20 @@
+{
+  "kind": "singleType",
+  "collectionName": "homes",
+  "info": {
+    "name": "home"
+  },
+  "options": {
+    "increments": true,
+    "timestamps": [
+      "createdAt",
+      "updatedAt"
+    ],
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "greeting": {
+      "type": "richtext"
+    }
+  }
+}

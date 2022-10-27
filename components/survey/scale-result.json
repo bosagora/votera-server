@@ -1,0 +1,22 @@
+{
+  "collectionName": "components_survey_scale_results",
+  "info": {
+    "name": "scaleResult",
+    "icon": "clipboard-list"
+  },
+  "options": {},
+  "attributes": {
+    "value": {
+      "type": "integer"
+    },
+    "question": {
+      "model": "question"
+    },
+    "sequence": {
+      "type": "integer"
+    },
+    "count": {
+      "type": "integer"
+    }
+  }
+}
