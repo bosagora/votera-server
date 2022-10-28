@@ -27,12 +27,32 @@ module.exports = {
         type RecordBallotPayload {
             ballot: Ballot
         }
+        type MyBallot {
+            id: ID!
+            choice: Int
+            commitment: String
+            transactionHash: String
+            createdAt: DateTime!
+        }
+        type ListMyBallotsPayload {
+            count: Int
+            values: [MyBallot]
+        }
+    `,
+    query: `
+        listMyBallots(proposalId: String!, actor: String!, sort: String, limit: Int, start: Int): ListMyBallotsPayload
     `,
     mutation: `
         submitBallot(input: SubmitBallotInput!): SubmitBallotPayload
         recordBallot(input: RecordBallotInput!): RecordBallotPayload
     `,
     resolver: {
+        Query: {
+            listMyBallots: {
+                description: 'List My Ballots after proposal closing',
+                resolver: 'application::ballot.ballot.listMyBallots',
+            },
+        },
         Mutation: {
             submitBallot: {
                 description: 'Submit Ballot for proposal to get commitment, signature',

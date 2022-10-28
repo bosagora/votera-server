@@ -4,37 +4,6 @@ const { ObjectId } = require('mongodb');
 const { ENUM_INTERACTION_TYPE_READ_ACTIVITY, ENUM_INTERACTION_TYPE_READ_POST } = require('../types/interaction');
 const { ENUM_POST_STATUS_OPEN } = require('../types/post');
 
-function throwCtxError(status, message) {
-    const err = new Error(message);
-    err.status = status;
-    err.expose = true;
-    throw err;
-}
-
-function throwBadRequest(message) {
-    throwCtxError(400, message);
-}
-
-function throwUnauthorized(message) {
-    throwCtxError(401, message);
-}
-
-function throwForbidden(message) {
-    throwCtxError(403, message);
-}
-
-function throwNotFound(message) {
-    throwCtxError(404, message);
-}
-
-function throwInternalServerError(message) {
-    throwCtxError(500, message);
-}
-
-function throwNotImplemented(message) {
-    throwCtxError(501, message);
-}
-
 async function increaseCountMongoose(id, name, inc) {
     if (!id) {
         return;
@@ -232,12 +201,6 @@ function sanitizeActivityInGroupList(activity) {
 }
 
 module.exports = {
-    throwBadRequest,
-    throwUnauthorized,
-    throwForbidden,
-    throwNotFound,
-    throwInternalServerError,
-    throwNotImplemented,
     increaseInteractionReadCountMongoose,
     increaseInteractionReadCountBookshelf,
     increaseProposalMemberCountMongoose,

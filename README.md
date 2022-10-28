@@ -148,7 +148,7 @@ Votera Server (Using strapi server)
 |Plugin|Name|Method|
 |------|----|------|
 |Application|Agora|find|
-|Application|Ballot|submitBallot,recordBallot|
+|Application|Ballot|submitBallot,recordBallot,listMyBallots|
 |Application|Feeds|count, feedsStatus, find, findone, listFeeds, update|
 |Application|Member|all|
 |Application|Member-Role|count,find,findone|

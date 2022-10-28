@@ -1,6 +1,7 @@
 'use strict';
 
 const { ethers } = require('ethers');
+const { ENUM_PROPOSAL_STATUS_CLOSED } = require('../../../src/types/proposal');
 
 const NONCE_SIZE = 32; // 8
 
@@ -66,5 +67,38 @@ module.exports = {
         }
 
         return ballot;
+    },
+    async listMyBallots(proposal, member, _start, _limit, _sort) {
+        const now = Date.now() / 1000;
+        if (proposal.status !== ENUM_PROPOSAL_STATUS_CLOSED || now < proposal.vote_end) {
+            throw strapi.errors.badRequest('NotClosed proposal');
+        }
+
+        const sealKey = strapi.services.boaclient.getVoteBoxSealKey(proposal.proposalId);
+
+        const params = { proposal: proposal.id, member };
+        const count = await strapi.query('ballot').count(params);
+        if (_start !== undefined) {
+            params._start = _start;
+        }
+        if (_limit !== undefined) {
+            params._limit = _limit;
+        }
+        if (_sort !== undefined) {
+            params._sort = _sort;
+        }
+        const founds = await strapi.query('ballot').find(params);
+        const values = founds.map((found) => {
+            const transaction = found.transactions.find((tr) => tr.status === 1 && tr.blockNumber > 0);
+            const plainValue = strapi.services.boaclient.decryptBallot(sealKey, found.cipherText);
+            return {
+                id: found.id,
+                choice: plainValue ? plainValue.choice : undefined,
+                commitment: found.commitment,
+                createdAt: found.createdAt,
+                transactionHash: transaction ? transaction.transactionHash : undefined,
+            };
+        });
+        return { count, values };
     },
 };
