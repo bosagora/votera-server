@@ -169,7 +169,7 @@ async function selectMyCommentsNews(postId) {
 function makeFeedsProposal(proposal, type) {
     return {
         type,
-        content: { proposalTitle: proposal.name },
+        content: { proposalTitle: proposal.name, proposalType: proposal.type },
         navigation: { proposalId: proposal.proposalId },
         isRead: false,
     };
