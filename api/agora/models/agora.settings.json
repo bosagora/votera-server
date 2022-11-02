@@ -36,7 +36,10 @@
     "providerUrl": {
       "type": "string"
     },
-    "blockExplorerUrl": {
+    "agoraScanUrl": {
+      "type": "string"
+    },
+    "boaScanUrl": {
       "type": "string"
     }
   }

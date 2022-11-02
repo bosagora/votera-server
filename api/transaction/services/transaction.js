@@ -16,18 +16,32 @@ module.exports = {
         if (transaction.blockNumber !== 0) {
             return { status: transaction.status };
         }
-        const receipt = await strapi.services.boaclient.waitForTransactionReceipt(hash);
-        if (!receipt) {
-            throw strapi.errors.badImplementation('transaction error');
-        }
+        try {
+            const receipt = await strapi.services.boaclient.waitForTransactionReceipt(hash);
+            if (!receipt) {
+                throw strapi.errors.badImplementation('transaction error');
+            }
 
-        transaction = await strapi.query('transaction').findOne({ transactionHash: hash });
-        if (transaction.blockNumber === receipt.blockNumber && transaction.status === receipt.status) {
-            return { status: transaction.status };
-        }
+            transaction = await strapi.query('transaction').findOne({ transactionHash: hash });
+            if (transaction.blockNumber === receipt.blockNumber && transaction.status === receipt.status) {
+                return { status: transaction.status };
+            }
 
-        await this.updateWithReceipt(receipt);
-        return { status: receipt.status };
+            await this.updateWithReceipt(receipt);
+            return { status: receipt.status };
+        } catch (error) {
+            if (error.transactionHash === hash) {
+                strapi.services.transaction
+                    .recordFailedTransaction(error.transactionHash, error.reason)
+                    .catch((err) => {
+                        strapi.log.warn(
+                            `recordFailedTransaction error: hash=${error.transactionHash} reason=${error.reason}`,
+                        );
+                        strapi.log.warn(err);
+                    });
+            }
+            throw error;
+        }
     },
     async updateWithReceipt(receipt) {
         if (!receipt) return null;
@@ -48,6 +62,20 @@ module.exports = {
             await strapi.services.validator.updateSubmitBallotTransaction(transaction, receipt);
         }
 
+        return transaction;
+    },
+    async recordFailedTransaction(hash, reason) {
+        if (!hash) {
+            return null;
+        }
+        const transaction = await strapi.query('transaction').update(
+            { transactionHash: hash },
+            {
+                blockNumber: -1,
+                status: 0,
+                reason,
+            },
+        );
         return transaction;
     },
     // info : { hash, method }

@@ -45,6 +45,9 @@
     "ballot": {
       "via": "transactions",
       "model": "ballot"
+    },
+    "reason": {
+      "type": "string"
     }
   }
 }
