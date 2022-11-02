@@ -570,9 +570,12 @@ async function processProposalStatusCreated(id) {
         proposal = await strapi.query('proposal').update({ id }, { paidComplete: true });
     }
 
+    strapi.log.info(`processProposalStatusCreated proposal.id=${id}`);
+
     let voteraState = await strapi.services.boaclient.getVoteraVoteState(proposal.proposalId);
 
     if (voteraState === ENUM_VOTE_STATE_CREATED) {
+        strapi.log.info(`waitForProposalTransaction.setupVoteInfo proposal.id=${id}`);
         voteraState = await waitForProposalTransaction(voteraState, proposal, 'setupVoteInfo');
         if (voteraState === null) {
             return null;
@@ -586,6 +589,7 @@ async function processProposalStatusCreated(id) {
                 proposal.vote_open,
                 getProposalInfoUrl(proposal),
             );
+            strapi.log.info(`waitForTransaction.setupVoteInfo proposal.id=${id}`);
             voteraState = await waitForTransaction(transactionInfo, proposal);
             if (voteraState === ENUM_VOTE_STATE_CREATED || voteraState === null) {
                 strapi.log.warn(
@@ -597,6 +601,7 @@ async function processProposalStatusCreated(id) {
     }
 
     if (voteraState === ENUM_VOTE_STATE_SETTING) {
+        strapi.log.info(`waitForProposalMiningTransaction.addValidators proposal.id=${id}`);
         voteraState = await waitForProposalMiningTransaction(voteraState, proposal, 'addValidators');
         if (voteraState === null) {
             return null;
@@ -616,6 +621,7 @@ async function processProposalStatusCreated(id) {
                     param.validators,
                     param.finalized,
                 );
+                strapi.log.info(`waitForTransaction.addValidators proposal.id=${id}`);
                 await waitForTransaction(transInfo, proposal);
             }
 
@@ -625,6 +631,7 @@ async function processProposalStatusCreated(id) {
                 lastParam.validators,
                 lastParam.finalized,
             );
+            strapi.log.info(`waitForTransaction.addValidators proposal.id=${id}`);
             voteraState = await waitForTransaction(lastTransInfo, proposal);
             if (voteraState === ENUM_VOTE_STATE_SETTING || voteraState === null) {
                 strapi.log.warn(
@@ -750,8 +757,11 @@ async function processProposalStatusAssess(id) {
         return null;
     }
 
+    strapi.log.info(`processProposalStatusAssess proposal.id=${id}`);
+
     let voteraState = await strapi.services.boaclient.getVoteraVoteState(proposal.proposalId);
     if (voteraState === ENUM_VOTE_STATE_ASSESSING) {
+        strapi.log.info(`waitForProposalTransaction.countAssess proposal.id=${id}`);
         voteraState = await waitForProposalTransaction(voteraState, proposal, 'countAssess');
         if (voteraState === null) {
             return null;
@@ -759,6 +769,7 @@ async function processProposalStatusAssess(id) {
 
         if (voteraState === ENUM_VOTE_STATE_ASSESSING) {
             const transactionInfo = await strapi.services.boaclient.countAssess(proposal.proposalId);
+            strapi.log.info(`waitForProposalTransaction.countAssess proposal.id=${id}`);
             voteraState = await waitForTransaction(transactionInfo, proposal);
             await strapi.services.validator.syncAssessValidatorList(proposal);
             if (voteraState === ENUM_VOTE_STATE_ASSESSING || voteraState === null) {
@@ -894,13 +905,17 @@ async function processProposalStatusVote(id) {
         return null;
     }
 
+    strapi.log.info(`processProposalStatusVote proposal.id=${id}`);
+
     let voteraState = await strapi.services.boaclient.getVoteraVoteState(proposal.proposalId);
 
     if (voteraState === ENUM_VOTE_STATE_RUNNING) {
+        strapi.log.info(`waitForProposalMiningTransaction.revealBallot proposal.id=${id}`);
         voteraState = await waitForProposalMiningTransaction(voteraState, proposal, 'revealBallot');
         if (voteraState === null) {
             return null;
         }
+        strapi.log.info(`waitForProposalTransaction.countVote proposal.id=${id}`);
         voteraState = await waitForProposalTransaction(voteraState, proposal, 'countVote');
         if (voteraState === null) {
             return null;
@@ -935,6 +950,7 @@ async function processProposalStatusVote(id) {
                     nonces,
                 );
 
+                strapi.log.info(`waitForTransaction.revealBallot proposal.id=${id}`);
                 await waitForTransaction(transInfo, proposal);
 
                 for (let j = 0; j < validators.length; j += 1) {
@@ -952,6 +968,7 @@ async function processProposalStatusVote(id) {
         }
 
         const transInfo = await strapi.services.boaclient.countVote(proposal.proposalId);
+        strapi.log.info(`waitForTransaction.countVote proposal.id=${id}`);
         voteraState = await waitForTransaction(transInfo, proposal);
         await strapi.services.validator.syncBallotValidatorList(proposal);
         if (voteraState === ENUM_VOTE_STATE_RUNNING || voteraState === null) {
