@@ -37,13 +37,11 @@ module.exports = {
                         creator: result.creator.id || '',
                     };
                     strapi.services.pubsub.publish('proposalCreated', { proposalCreated: subProposal }).catch((err) => {
-                        strapi.log.warn(`publish.proposalCreated failed: proposal.id = ${result.id}`);
-                        strapi.log.warn(err);
+                        strapi.log.warn(`publish.proposalCreated failed: proposal.id=${result.id}\n%j`, err);
                     });
                 }
             } catch (err) {
-                strapi.log.warn(`publish.proposalCreated failed: proposal.id = ${result.id}`);
-                strapi.log.warn(err);
+                strapi.log.warn(`publish.proposalCreated failed: proposal.id=${result.id}\n%j`, err);
             }
         },
         async beforeUpdate(params, data) {

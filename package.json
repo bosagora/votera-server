@@ -11,6 +11,7 @@
     "test": "jest --forceExit --detectOpenHandles"
   },
   "dependencies": {
+    "@ethersproject/experimental": "5.6.3",
     "blakejs": "https://github.com/jkkang-kosac/blakejs.git",
     "ethers": "5.6.9",
     "fast-json-stable-stringify": "^2.1.0",

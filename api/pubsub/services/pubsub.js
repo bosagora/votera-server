@@ -46,7 +46,7 @@ module.exports = {
         if (!strapi.config.pubsub.service.enable) {
             return;
         }
-        console.log('🚀  Start API PubSub Server');
+        strapi.log.info('🚀  Start API PubSub Server');
 
         if (strapi.config.pubsub?.redis?.enable && strapi.config.pubsub?.redis?.options) {
             const options = {
@@ -90,33 +90,13 @@ module.exports = {
                 execute,
                 subscribe,
                 schema,
-                onConnect: (context) => {
-                    console.log('pubsub.connect.');
-                    // if (context.connectionParams.authToken) {
-                    //     return strapi.plugins['users-permissions'].services.jwt
-                    //         .verify(context.connectionParams.authToken)
-                    //         .then((data) => {
-                    //             return strapi.plugins['users-permissions'].services.user.fetchAuthenticatedUser(
-                    //                 data.id,
-                    //             );
-                    //         })
-                    //         .then((user) => {
-                    //             return { currentUser: user };
-                    //         })
-                    //         .catch((err) => {
-                    //             throw err;
-                    //         });
-                    // }
-
-                    // throw new Error('missing auth token');
-                },
             },
             wsServer,
         );
     },
 
     publish: (triggerName, payload) => {
-        return this.pubsub ? this.pubsub.publish(triggerName, payload) : Promise.resolve(null);
+        return this.pubsub ? this.pubsub.publish(triggerName, payload) : Promise.resolve();
     },
 
     subscribe: (triggerName, onMessage) => {

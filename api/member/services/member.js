@@ -33,8 +33,7 @@ module.exports = {
             const data = await strapi.plugins['users-permissions'].services.user.add(user);
             return { user: data, created: true };
         } catch (error) {
-            strapi.log.warn(`member.createUser failed: email=${email}`);
-            strapi.log.warn(error);
+            strapi.log.warn(`member.createUser failed: email=${email}\n%j`, error);
             throw convertQueryOperationError(error);
         }
     },
@@ -136,8 +135,7 @@ module.exports = {
                 return { username, duplicated: false };
             }
         } catch (err) {
-            strapi.log.warn('checkDupUserName failed');
-            strapi.log.warn(err);
+            strapi.log.warn('checkDupUserName failed\n%j', err);
             throw convertQueryOperationError(err);
         }
     },
@@ -159,8 +157,7 @@ module.exports = {
                 authorized: member && member.user === user.id,
             };
         } catch (err) {
-            strapi.log.warn('checkMemberUser failed');
-            strapi.log.warn(err);
+            strapi.log.warn('checkMemberUser failed\n%j', err);
             throw convertQueryOperationError(err);
         }
     },

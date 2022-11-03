@@ -8,6 +8,24 @@ async function checkWaitingTransaction(transaction) {
 }
 
 module.exports = {
+    recordFailedTransaction(hash, reason) {
+        if (!hash) {
+            return;
+        }
+        strapi
+            .query('transaction')
+            .update(
+                { transactionHash: hash },
+                {
+                    blockNumber: -1,
+                    status: 0,
+                    reason,
+                },
+            )
+            .catch((err) => {
+                strapi.log.warn(`recordFailedTransaction failed: hash=${hash} reason=${reason}\n%j`, err);
+            });
+    },
     async updateReceipt(hash) {
         let transaction = await strapi.query('transaction').findOne({ transactionHash: hash });
         if (!transaction) {
@@ -31,14 +49,7 @@ module.exports = {
             return { status: receipt.status };
         } catch (error) {
             if (error.transactionHash === hash) {
-                strapi.services.transaction
-                    .recordFailedTransaction(error.transactionHash, error.reason)
-                    .catch((err) => {
-                        strapi.log.warn(
-                            `recordFailedTransaction error: hash=${error.transactionHash} reason=${error.reason}`,
-                        );
-                        strapi.log.warn(err);
-                    });
+                this.recordFailedTransaction(error.transactionHash, error.reason);
             }
             throw error;
         }
@@ -62,20 +73,6 @@ module.exports = {
             await strapi.services.validator.updateSubmitBallotTransaction(transaction, receipt);
         }
 
-        return transaction;
-    },
-    async recordFailedTransaction(hash, reason) {
-        if (!hash) {
-            return null;
-        }
-        const transaction = await strapi.query('transaction').update(
-            { transactionHash: hash },
-            {
-                blockNumber: -1,
-                status: 0,
-                reason,
-            },
-        );
         return transaction;
     },
     // info : { hash, method }
@@ -140,8 +137,7 @@ module.exports = {
             try {
                 await Promise.all(transactions.map((transaction) => checkWaitingTransaction(transaction)));
             } catch (error) {
-                strapi.log.warn('transaction.batchJob failed');
-                console.warn(error);
+                strapi.log.warn('transaction.batchJob failed\n%j', error);
             }
             if (transactions.length < limit) {
                 break;

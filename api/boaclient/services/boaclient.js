@@ -1,34 +1,17 @@
 const { ethers, Wallet, BigNumber } = require('ethers');
 const fsp = require('fs/promises');
-const Boom = require('boom');
 const nacl = require('tweetnacl');
 const { blake2bInit, blake2bUpdate, blake2bFinal } = require('blakejs');
 const { arrayify, hexlify } = require('ethers/lib/utils');
 const stringify = require('fast-json-stable-stringify');
+const moment = require('moment');
+const { NonceManager } = require('@ethersproject/experimental');
 const { CommonsBudget } = require('../../../src/CommonsBudget');
 const { CommonsStorage } = require('../../../src/CommonsStorage');
 const { VoteraVote } = require('../../../src/VoteraVote');
 const { VoteBox } = require('../../../src/VoteBox');
 const { ENUM_BUDGET_STATE_INVALID } = require('../../../src/types/CommonsBudgetType');
-
-function convertBoaSdkError(err) {
-    if (Boom.isBoom(err)) {
-        // which may be thrown in this function
-        return err;
-    }
-    if (err.name) {
-        switch (err.name) {
-            case 'BadRequestError':
-            case 'NotFoundError':
-                return strapi.errors.badRequest(err.message);
-            case 'NetworkError': // agora server error
-                return strapi.errors.badGateway(err.message);
-        }
-    }
-    // when failed to connect to stoa
-    strapi.log.warn(err);
-    return strapi.errors.badImplementation(err.message);
-}
+const { GasPriceManager } = require('../../../src/GasPriceManager');
 
 async function readWalletJson(path) {
     return fsp.readFile(path);
@@ -105,7 +88,8 @@ module.exports = {
 
     getVoteraVoteContract() {
         if (!this.voteraVote) {
-            this.voteraVote = new VoteraVote(strapi.config.boaclient.contract.voteraVote, this.signer);
+            const voteraSigner = new NonceManager(new GasPriceManager(this.signer));
+            this.voteraVote = new VoteraVote(strapi.config.boaclient.contract.voteraVote, voteraSigner);
         }
         return this.voteraVote;
     },
@@ -166,6 +150,14 @@ module.exports = {
             }
         }
         return receipt;
+    },
+
+    skipTransaction(transaction) {
+        if (!transaction?.createdAt) {
+            return false;
+        }
+        const createdAt = moment(transaction.createdAt).valueOf();
+        return Date.now() - createdAt < strapi.config.boaclient.transaction_retry_after;
     },
 
     async setupVoteInfo(proposalId, startTime, endTime, openTime, info) {

@@ -87,7 +87,7 @@ async function isProposalExists(id) {
         }
         return await strapi.services.boaclient.isCommonsBudgetProposalExist(id);
     } catch (err) {
-        strapi.log.warn(`idExists failed: proposalId=${id}`);
+        strapi.log.warn(`idExists failed: proposalId=${id}\n%j`, err);
         throw convertQueryOperationError(err);
     }
 }
@@ -158,7 +158,7 @@ async function getUploadFileInfo(id) {
             };
         }
     } catch (err) {
-        strapi.log.warn(`getUploadFileInfo failed: id=${id}`);
+        strapi.log.warn(`getUploadFileInfo failed: id=${id}\n%j`, err);
         throw convertQueryOperationError(err);
     }
 }
@@ -319,23 +319,28 @@ function findMiningTransaction(proposal, methodName) {
 
 async function waitForProposalTransaction(state, proposal, method) {
     const transaction = findLastTransaction(proposal, method);
-    if (!transaction || transaction.blockNumber > 0) {
+    if (!transaction || transaction.blockNumber !== 0) {
         return state;
+    } else if (strapi.services.boaclient.skipTransaction(transaction)) {
+        return null;
     }
 
     try {
         const receipt = await strapi.services.boaclient.waitForTransactionReceipt(transaction.transactionHash);
-        if (!receipt) {
+        if (receipt) {
+            await strapi.services.transaction.updateWithReceipt(receipt);
+        } else {
+            strapi.services.transaction.recordFailedTransaction(transaction.transactionHash, 'timeout null receipt');
             return null;
         }
-        await strapi.services.transaction.updateWithReceipt(receipt);
+
         return await strapi.services.boaclient.getVoteraVoteState(proposal.proposalId);
     } catch (error) {
         if (error.transactionHash === transaction.transactionHash) {
-            strapi.services.transaction.recordFailedTransaction(error.transactionHash, error.reason).catch((err) => {
-                strapi.log.warn(`recordFailedTransaction error: hash=${error.transactionHash} reason=${error.reason}`);
-                strapi.log.warn(err);
-            });
+            strapi.services.transaction.recordFailedTransaction(error.transactionHash, error.reason);
+        } else if (error.code === 'TIMEOUT') {
+            strapi.services.transaction.recordFailedTransaction(transaction.transactionHash, error.reason);
+            return null;
         }
         throw error;
     }
@@ -352,10 +357,7 @@ async function waitForTransaction(transactionInfo, proposal) {
         return await strapi.services.boaclient.getVoteraVoteState(proposal.proposalId);
     } catch (error) {
         if (error.transactionHash === transactionInfo.hash) {
-            strapi.services.transaction.recordFailedTransaction(error.transactionHash, error.reason).catch((err) => {
-                strapi.log.warn(`recordFailedTransaction error: hash=${error.transactionHash} reason=${error.reason}`);
-                strapi.log.warn(err);
-            });
+            strapi.services.transaction.recordFailedTransaction(error.transactionHash, error.reason);
         }
         throw error;
     }
@@ -365,58 +367,33 @@ async function waitForProposalMiningTransaction(state, proposal, method) {
     const txs = findMiningTransaction(proposal, method);
     if (!txs || txs.length === 0) {
         return state;
+    } else if (txs.some((tx) => strapi.services.boaclient.skipTransaction(tx))) {
+        return null;
     }
+
     await Promise.all(
         txs.map((tx) => {
             return strapi.services.boaclient
                 .waitForTransactionReceipt(tx.transactionHash)
                 .then((receipt) => {
-                    return strapi.services.transaction.updateWithReceipt(receipt);
+                    if (receipt) {
+                        return strapi.services.transaction.updateWithReceipt(receipt);
+                    } else {
+                        strapi.services.transaction.recordFailedTransaction(tx.transactionHash, 'timeout null receipt');
+                        return Promise.resolve(null);
+                    }
                 })
                 .catch((error) => {
                     if (error.transactionHash === tx.transactionHash) {
-                        strapi.services.transaction
-                            .recordFailedTransaction(error.transactionHash, error.reason)
-                            .catch((err) => {
-                                strapi.log.warn(
-                                    `recordFailedTransaction error: hash=${error.transactionHash} reason=${error.reason}`,
-                                );
-                                strapi.log.warn(err);
-                            });
+                        strapi.services.transaction.recordFailedTransaction(error.transactionHash, error.reason);
+                    } else if (error.code === 'TIMEOUT') {
+                        strapi.services.transaction.recordFailedTransaction(tx.transactionHash, error.reason);
                     }
                     throw error;
                 });
         }),
     );
     return await strapi.services.boaclient.getVoteraVoteState(proposal.proposalId);
-}
-
-async function waitForMultiTransaction(txHashs) {
-    if (!txHashs || txHashs.length === 0) {
-        return;
-    }
-    await Promise.all(
-        txHashs.map((txHash) => {
-            return strapi.services.boaclient
-                .waitForTransactionReceipt(txHash)
-                .then((receipt) => {
-                    return strapi.services.transaction.updateWithReceipt(receipt);
-                })
-                .catch((error) => {
-                    if (error.transactionHash === txHash) {
-                        strapi.services.transaction
-                            .recordFailedTransaction(error.transactionHash, error.reason)
-                            .catch((err) => {
-                                strapi.log.warn(
-                                    `recordFailedTransaction error: hash=${error.transactionHash} reason=${error.reason}`,
-                                );
-                                strapi.log.warn(err);
-                            });
-                    }
-                    throw error;
-                });
-        }),
-    );
 }
 
 async function changeCreatedProposalToStatus(proposal, status) {
@@ -434,20 +411,14 @@ async function changeCreatedProposalToStatus(proposal, status) {
                 creator: getValueId(result.creator),
             };
             strapi.services.pubsub.publish('proposalChanged', { proposalChanged: subProposal }).catch((err) => {
-                strapi.log.warn(`publish.proposalChanged failed: proposal.id = ${result.id}`);
-                strapi.log.warn(err);
+                strapi.log.warn(`publish.proposalChanged failed: proposal.id = ${result.id}\n%j`, err);
             });
             strapi.services.pubsub.publish('proposalCreated', { proposalCreated: subProposal }).catch((err) => {
-                strapi.log.warn(`publish.proposalCreated failed: proposal.id = ${result.id}`);
-                strapi.log.warn(err);
+                strapi.log.warn(`publish.proposalCreated failed: proposal.id = ${result.id}\n%j`, err);
             });
-            strapi.services.notification.onProposalCreated(result).catch((err) => {
-                strapi.log.warn(`notification.onProposalCreated failed: proposal.id = ${result.id}`);
-                strapi.log.warn(err);
-            });
+            strapi.services.notification.onProposalCreated(result);
         } catch (err) {
-            strapi.log.warn(`publish.proposalChanged failed: proposal.id=${result.id}`);
-            strapi.log.warn(err);
+            strapi.log.warn(`publish.proposalChanged failed: proposal.id=${result.id}\n%j`, err);
         }
     }
     return result;
@@ -467,14 +438,10 @@ async function changeProposalStatusFromTo(proposal, from, to) {
             creator: result.creator.id,
         };
         strapi.services.pubsub.publish('proposalChanged', { proposalChanged: subProposal }).catch((err) => {
-            strapi.log.warn(`publish.proposalChanged failed: proposal.id = ${result.id}`);
-            strapi.log.warn(err);
+            strapi.log.warn(`publish.proposalChanged failed: proposal.id = ${result.id}\n%j`, err);
         });
         if (NOTIFY_CHANGED_STATUS.includes(to)) {
-            strapi.services.notification.onProposalUpdated(result).catch((err) => {
-                strapi.log.warn(`notification.onProposalUpdated failed: proposal.id = ${result.id}`);
-                strapi.log.warn(err);
-            });
+            strapi.services.notification.onProposalUpdated(result);
         }
     }
     return result;
@@ -492,10 +459,7 @@ async function checkExistenceAtStatusCreated(proposal) {
                 changed: await changeCreatedProposalToStatus(proposal, ENUM_PROPOSAL_STATUS_CANCEL),
             };
         } else if (now > endDate - 86400) {
-            strapi.services.notification.onProposalTimeAlarm(proposal).catch((err) => {
-                strapi.log.warn(`notification.proposalTimeAlarm failed: proposal.id=${proposal.id}`);
-                strapi.log.warn(err);
-            });
+            strapi.services.notification.onProposalTimeAlarm(proposal);
         }
         return { exist: false, changed: null };
     }
@@ -578,6 +542,7 @@ async function processProposalStatusCreated(id) {
         strapi.log.info(`waitForProposalTransaction.setupVoteInfo proposal.id=${id}`);
         voteraState = await waitForProposalTransaction(voteraState, proposal, 'setupVoteInfo');
         if (voteraState === null) {
+            strapi.log.info('waitForProposalTransaction.setupVoteInfo skip');
             return null;
         }
 
@@ -604,6 +569,7 @@ async function processProposalStatusCreated(id) {
         strapi.log.info(`waitForProposalMiningTransaction.addValidators proposal.id=${id}`);
         voteraState = await waitForProposalMiningTransaction(voteraState, proposal, 'addValidators');
         if (voteraState === null) {
+            strapi.log.info('waitForProposalMiningTransaction.addValidators skip');
             return null;
         }
 
@@ -749,10 +715,7 @@ async function processProposalStatusAssess(id) {
     const now = Date.now() / 1000;
     if (now < proposal.assessEnd) {
         if (now > proposal.assessEnd - 86400) {
-            strapi.services.notification.onProposalTimeAlarm(proposal).catch((err) => {
-                strapi.log.warn(`notification.proposalTimeAlaram failed: proposal.id=${proposal.id}`);
-                strapi.log.warn(err);
-            });
+            strapi.services.notification.onProposalTimeAlarm(proposal);
         }
         return null;
     }
@@ -764,12 +727,13 @@ async function processProposalStatusAssess(id) {
         strapi.log.info(`waitForProposalTransaction.countAssess proposal.id=${id}`);
         voteraState = await waitForProposalTransaction(voteraState, proposal, 'countAssess');
         if (voteraState === null) {
+            strapi.log.info('waitForProposalTransaction.countAssess skip');
             return null;
         }
 
         if (voteraState === ENUM_VOTE_STATE_ASSESSING) {
             const transactionInfo = await strapi.services.boaclient.countAssess(proposal.proposalId);
-            strapi.log.info(`waitForProposalTransaction.countAssess proposal.id=${id}`);
+            strapi.log.info(`waitForTransaction.countAssess proposal.id=${id}`);
             voteraState = await waitForTransaction(transactionInfo, proposal);
             await strapi.services.validator.syncAssessValidatorList(proposal);
             if (voteraState === ENUM_VOTE_STATE_ASSESSING || voteraState === null) {
@@ -794,10 +758,7 @@ async function processProposalStatusPendingVote(id) {
     const now = Date.now() / 1000;
     if (now < proposal.vote_start) {
         if (now > proposal.vote_start - 86400) {
-            strapi.services.notification.onProposalTimeAlarm(proposal).catch((err) => {
-                strapi.log.warn(`notification.proposalTimeAlarm failed: proposal.id=${proposal.id}`);
-                strapi.log.warn(err);
-            });
+            strapi.services.notification.onProposalTimeAlarm(proposal);
         }
         return null;
     }
@@ -897,10 +858,7 @@ async function processProposalStatusVote(id) {
     const now = Date.now() / 1000;
     if (now < proposal.vote_open) {
         if (now > proposal.vote_end - 86400) {
-            strapi.services.notification.onProposalTimeAlarm(proposal).catch((err) => {
-                strapi.log.warn(`notification.proposalTimeAlarm failed: proposal.id=${proposal.id}`);
-                strapi.log.warn(err);
-            });
+            strapi.services.notification.onProposalTimeAlarm(proposal);
         }
         return null;
     }
@@ -913,11 +871,13 @@ async function processProposalStatusVote(id) {
         strapi.log.info(`waitForProposalMiningTransaction.revealBallot proposal.id=${id}`);
         voteraState = await waitForProposalMiningTransaction(voteraState, proposal, 'revealBallot');
         if (voteraState === null) {
+            strapi.log.info('waitForProposalMiningTransaction.revealBallot skip');
             return null;
         }
         strapi.log.info(`waitForProposalTransaction.countVote proposal.id=${id}`);
         voteraState = await waitForProposalTransaction(voteraState, proposal, 'countVote');
         if (voteraState === null) {
+            strapi.log.info('waitForProposalTransaction.countVote skip');
             return null;
         }
     }
@@ -935,6 +895,7 @@ async function processProposalStatusVote(id) {
             const revealBallots = await selectProposalRevealBallots(proposal.id, i, pageSize);
             if (!revealBallots) {
                 // it means it's not time for revealing vote
+                strapi.log.info('selectProposalRevealBallots null - not time for revealing');
                 return null;
             }
 
@@ -1072,8 +1033,7 @@ module.exports = {
 
             return createdProposal;
         } catch (error) {
-            strapi.log.warn('createProposal failed: ', { proposal });
-            strapi.log.warn(error);
+            strapi.log.warn('createProposal failed: proposal=%j\n%j', proposal, error);
             throw convertQueryOperationError(error);
         }
     },
@@ -1090,8 +1050,7 @@ module.exports = {
                     return { invalidValidator: true };
                 }
             } catch (err) {
-                strapi.log.warn(`joinProposal failed: invalidValidator member.id=${member.id}`);
-                strapi.log.warn(err);
+                strapi.log.warn(`joinProposal failed: invalidValidator member.id=${member.id}\n%j`, err);
                 return { invalidValidator: true };
             }
 
@@ -1109,8 +1068,7 @@ module.exports = {
 
             return { invalidValidator: false, proposal };
         } catch (error) {
-            strapi.log.warn(`joinProposal failed : proposal.id=${id} member.id=${member.id}`);
-            strapi.log.warn(error);
+            strapi.log.warn(`joinProposal failed : proposal.id=${id} member.id=${member.id}\n%j`, error);
             throw convertQueryOperationError(error);
         }
     },
@@ -1150,8 +1108,7 @@ module.exports = {
                         offset -= 1;
                     }
                 } catch (err) {
-                    strapi.log.warn(`batchJobForCreated failed : proposal.id=${proposal.id}`);
-                    console.warn(err);
+                    strapi.log.warn(`batchJobForCreated failed : proposal.id=${proposal.id}\n%j`, err);
                 }
             }
             if (proposals.length < limit) {
@@ -1200,8 +1157,7 @@ module.exports = {
                         }
                     }
                 } catch (err) {
-                    strapi.log.warn(`batchJobForAssess failed : proposal.id=${proposal.id}`);
-                    console.warn(err);
+                    strapi.log.warn(`batchJobForAssess failed : proposal.id=${proposal.id}\n%j`, err);
                 }
             }
             if (proposals.length < limit) {
@@ -1250,8 +1206,7 @@ module.exports = {
                         }
                     }
                 } catch (err) {
-                    strapi.log.warn(`batchJobForVote failed : proposal.id=${proposal.id}`);
-                    console.warn(err);
+                    strapi.log.warn(`batchJobForVote failed : proposal.id=${proposal.id}\n%j`, err);
                 }
             }
             if (proposals.length < limit) {
@@ -1353,7 +1308,7 @@ module.exports = {
                     return response;
                 }
                 if (transaction.status !== 0) {
-                    console.error(
+                    strapi.log.error(
                         `proposal create transaction mismatch proposal.id=${proposal.id} transaction=${transaction.transactionHash}`,
                     );
                 }
@@ -1408,8 +1363,7 @@ module.exports = {
 
             return response;
         } catch (error) {
-            strapi.log.warn(`proposalFee failed: proposalId=${proposal.proposalId}`);
-            strapi.log.warn(error);
+            strapi.log.warn(`proposalFee failed: proposalId=${proposal.proposalId}\n%j`, error);
             throw convertQueryOperationError(error);
         }
     },
@@ -1445,8 +1399,7 @@ module.exports = {
                             );
                         })
                         .catch((error) => {
-                            strapi.log.warn(`checkProposalFee failed: proposalId=${proposalId}`);
-                            strapi.log.warn(error);
+                            strapi.log.warn(`checkProposalFee.1 failed: proposalId=${proposalId}\n%j`, error);
                         });
                     return { proposal, status: ENUM_FEE_STATUS_PAID };
                 }
@@ -1493,24 +1446,15 @@ module.exports = {
                     })
                     .catch((error) => {
                         if (error.transactionHash === transactionHash) {
-                            strapi.services.transaction
-                                .recordFailedTransaction(error.transactionHash, error.reason)
-                                .catch((err) => {
-                                    strapi.log.warn(
-                                        `recordFailedTransaction error: hash=${error.transactionHash} reason=${error.reason}`,
-                                    );
-                                    strapi.log.warn(err);
-                                });
+                            strapi.services.transaction.recordFailedTransaction(error.transactionHash, error.reason);
                         }
-                        strapi.log.warn(`checkProposalFee failed: proposalId=${proposal.proposalId}`);
-                        strapi.log.warn(error);
+                        strapi.log.warn(`checkProposalFee.2 failed: proposalId=${proposal.proposalId}\n%j`, error);
                     });
             }
 
             return { proposal, status: ENUM_FEE_STATUS_MINING };
         } catch (error) {
-            strapi.log.warn(`checkProposalFee failed: proposalId=${proposal.proposalId}`);
-            strapi.log.warn(error);
+            strapi.log.warn(`checkProposalFee failed: proposalId=${proposal.proposalId}\n%j`, error);
             throw convertQueryOperationError(error);
         }
     },
@@ -1586,8 +1530,7 @@ module.exports = {
             );
 
             strapi.services.transaction.updateReceipt(transactionHash).catch((error) => {
-                strapi.log.warn(`submitAssess.updateTransaction failed transaionHash=${transactionHash}`);
-                strapi.log.warn(error);
+                strapi.log.warn(`submitAssess.updateTransaction failed transaionHash=${transactionHash}\n%j`, error);
             });
         }
 

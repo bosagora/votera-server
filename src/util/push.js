@@ -33,7 +33,7 @@ function getMessageSet(payload) {
          * 한, 영 분기 어떻게...
          * */
         default:
-            console.log('no push type');
+            strapi.log.debug('no push type');
             break;
     }
 
@@ -75,7 +75,7 @@ module.exports = {
 
             // Check that all your push tokens appear to be valid Expo push tokens
             if (!Expo.isExpoPushToken(pushToken)) {
-                console.error(`Push token ${pushToken} is not a valid Expo push token`);
+                strapi.log.warn(`Push token ${pushToken} is not a valid Expo push token`);
                 continue;
             }
 
@@ -104,10 +104,10 @@ module.exports = {
             for (let chunk of chunks) {
                 try {
                     let ticketChunk = await expo.sendPushNotificationsAsync(chunk);
-                    console.log('🚀 ~ ticketChunk', ticketChunk);
+                    strapi.log.debug('🚀 ~ ticketChunk', ticketChunk);
                     tickets.push(...ticketChunk);
                 } catch (error) {
-                    console.error(error);
+                    strapi.log.warn('sendPushNotification failed: ', error);
                 }
             }
         })();

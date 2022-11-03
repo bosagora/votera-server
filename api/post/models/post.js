@@ -180,20 +180,15 @@ module.exports = {
                         writer: result.writer?.id,
                     };
                     strapi.services.pubsub.publish('postCreated', { postCreated: subPost }).catch((err) => {
-                        strapi.log.warn(`publish.postCreated failed: post.id = ${result.id}`);
-                        strapi.log.warn(err);
+                        strapi.log.warn(`publish.postCreated failed: post.id = ${result.id}\n%j`, err);
                     });
                 }
 
                 if (useNotifyTypes.includes(result.type)) {
-                    strapi.services.notification.onPostCreated(result).catch((err) => {
-                        strapi.log.warn(`notification.postCreated failed: post.id = ${result.id}`);
-                        strapi.log.warn(err);
-                    });
+                    strapi.services.notification.onPostCreated(result);
                 }
             } catch (error) {
-                strapi.log.warn(`publish.postCreated failed: post.id = ${result.id}`);
-                strapi.log.warn(error);
+                strapi.log.warn(`publish.postCreated failed: post.id = ${result.id}\n%j`, error);
             }
         },
         async beforeUpdate(where, data) {
@@ -210,7 +205,7 @@ module.exports = {
                     }
                 }
             } catch (err) {
-                console.error('post.beforeUpdate catch: ', err);
+                strapi.log.warn('post.beforeUpdate catch: ', err);
             }
         },
         async afterDelete(result, params) {
@@ -226,7 +221,7 @@ module.exports = {
                     await postDeleted(result);
                 }
             } catch (err) {
-                console.error('post.afterDelete catch: ', err);
+                strapi.log.warn('post.afterDelete catch: ', err);
             }
         },
     },

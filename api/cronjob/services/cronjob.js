@@ -34,8 +34,7 @@ module.exports = {
                 await func();
                 return true;
             } catch (err) {
-                strapi.log.warn(`catch exception while trying lock resource=${resource}`);
-                strapi.log.warn(err);
+                strapi.log.warn(`catch exception while trying lock resource=${resource}\n%j`, err);
                 return false;
             }
         }
@@ -52,8 +51,7 @@ module.exports = {
             try {
                 await func();
             } catch (err) {
-                strapi.log.warn(`catch exception while processing function resource=${resource}`);
-                strapi.log.warn(err);
+                strapi.log.warn(`catch exception while processing function resource=${resource}\n%j`, err);
             }
             clearInterval(tmid);
             await lock.unlock();
@@ -65,8 +63,7 @@ module.exports = {
                 return false;
             }
 
-            strapi.log.warn(`catch exception while trying lock resource=${resource}`);
-            strapi.log.warn(err);
+            strapi.log.warn(`catch exception while trying lock resource=${resource}\n%j`, err);
 
             return false;
         }

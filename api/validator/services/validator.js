@@ -187,9 +187,9 @@ module.exports = {
             await strapi.query('validator').update({ address, proposal: post.activity.proposal }, { assessUpdate });
         } catch (err) {
             strapi.log.warn(
-                `updateSubmitAssess.Validator error address=${transaction.from} proposal=${post.activity.proposal}`,
+                `updateSubmitAssess.Validator error address=${transaction.from} proposal=${post.activity.proposal}\n`,
+                err,
             );
-            strapi.log.warn(err);
         }
     },
     async listBallotValidators(proposalId, _limit, _start) {
@@ -219,9 +219,9 @@ module.exports = {
             await strapi.query('validator').update({ address, proposal: ballot.proposal }, { ballotUpdate });
         } catch (err) {
             strapi.log.warn(
-                `updateSubmitBallot.Validator error address=${transaction.from} proposal=${ballot.proposal}`,
+                `updateSubmitBallot.Validator error address=${transaction.from} proposal=${ballot.proposal}\n%j`,
+                err,
             );
-            strapi.log.warn(err);
         }
     },
     async syncAssessValidatorList(proposal) {

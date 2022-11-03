@@ -69,7 +69,7 @@ module.exports = {
                 };
             }
         } catch (err) {
-            console.log('readInteraction error: ', err);
+            strapi.log.warn('readInteraction error: ', err);
             throw convertQueryOperationError(err);
         }
     },
