@@ -12,12 +12,13 @@
 
 module.exports = {
     '*/10 * * * * *': async () => {
+        // every 10 minutes
         await strapi.services.cronjob.tryLock('lock:batch:transaction', async () => {
             await strapi.services.transaction.batchJob();
         });
     },
-    '* * * * *': async () => {
-        // every minutes
+    '*/10 * * * *': async () => {
+        // every 10 minutes
         await strapi.services.cronjob.tryLock('lock:batch:proposalCreate', async () => {
             await strapi.services.proposal.batchJobForCreated();
         });
