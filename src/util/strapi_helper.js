@@ -157,8 +157,7 @@ async function increaseSurveyScaleResultBookshelf(componentId, count) {
 async function insertManyFeedsMongoose(targets) {
     await strapi.query('feeds').model.insertMany(targets, function (error, docs) {
         if (error) {
-            strapi.log.warn('saveFeeds exception');
-            strapi.log.warn(error);
+            strapi.log.warn('saveFeeds exception\n%j', error);
         }
     });
 }

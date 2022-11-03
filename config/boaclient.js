@@ -14,9 +14,10 @@ module.exports = ({ env }) => ({
     contract: {
         commonsBudget: env('COMMONS_BUDGET_ADDRESS'),
         voteraVote: env('VOTERA_VOTE_ADDRESS'),
-        validatorSize: env.int('VOTERA_VOTE_VALIDATOR_SIZE', 100),
-        revealBallotSize: env.int('VOTERA_VOTE_REVEALBALLOT_SIZE', 100),
+        validatorSize: env.int('VOTERA_VOTE_VALIDATOR_SIZE', 500),
+        revealBallotSize: env.int('VOTERA_VOTE_REVEALBALLOT_SIZE', 500),
     },
     transaction_wait: env.int('TRANSACTION_WAIT_TIME', 30000),
+    transaction_retry_after: env.int('TRANSACTION_RETRY_AFTER', 90000),
     hmacKey: env('HMAC_KEY'),
 });

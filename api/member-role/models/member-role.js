@@ -95,7 +95,7 @@ module.exports = {
             try {
                 await memberRoleCreated(result);
             } catch (err) {
-                console.log('member-role.afterCreate catch: ', err);
+                strapi.log.warn('member-role.afterCreate catch: ', err);
             }
         },
         async beforeUpdate(params, data) {
@@ -114,7 +114,7 @@ module.exports = {
                     }
                 }
             } catch (err) {
-                console.error('member-role.beforeUpdate catch: ', err);
+                strapi.log.warn('member-role.beforeUpdate catch: ', err);
             }
         },
         async afterDelete(result, params) {
@@ -130,7 +130,7 @@ module.exports = {
                     await memberRoleDeleted(result);
                 }
             } catch (err) {
-                console.error('member-role.afterDelete catch: ', err);
+                strapi.log.warn('member-role.afterDelete catch: ', err);
             }
         },
     },

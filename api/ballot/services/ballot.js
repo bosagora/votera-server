@@ -61,8 +61,7 @@ module.exports = {
             );
 
             strapi.services.transaction.updateReceipt(transactionHash).catch((error) => {
-                strapi.log.warn(`submitBallot.updateTransaction failed transactionHash=${transactionHash}`);
-                strapi.log.warn(error);
+                strapi.log.warn(`submitBallot.updateTransaction failed transactionHash=${transactionHash}\n%j`, error);
             });
         }
 

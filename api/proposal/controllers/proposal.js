@@ -87,22 +87,16 @@ module.exports = {
                         strapi.services.pubsub
                             .publish('proposalCreated', { proposalCreated: subProposal })
                             .catch((err) => {
-                                strapi.log.warn(`publish.proposalCreated failed: proposal.id = ${proposal.id}`);
-                                strapi.log.warn(err);
+                                strapi.log.warn(`publish.proposalCreated failed: proposal.id=${proposal.id}\n%j`, err);
                             });
-                        strapi.services.notification.onProposalCreated(proposal).catch((err) => {
-                            strapi.log.warn(
-                                `notification.proposalCreated failed: proposal.id=${proposal.id} proposal_id=${proposal.proposalId}`,
-                            );
-                            strapi.log.warn(err);
-                        });
+                        strapi.services.notification.onProposalCreated(proposal);
                     }
                 })
                 .catch((err) => {
                     strapi.log.warn(
-                        `follow.createProposal failed: proposal.id=${proposal.id} proposal_id=${proposal.proposalId}`,
+                        `follow.createProposal failed: proposal.id=${proposal.id} proposal_id=${proposal.proposalId}\n%j`,
+                        err,
                     );
-                    strapi.log.warn(err);
                 });
         }
 
@@ -124,9 +118,9 @@ module.exports = {
                 .createJoinProposal(getValueId(ctx.state.user.user_feed), result.proposal.id)
                 .catch((err) => {
                     strapi.log.warn(
-                        `follow.createJoinProposal failed: proposal.id=${result.proposal.id} member.id=${checkMember.member.id}`,
+                        `follow.createJoinProposal failed: proposal.id=${result.proposal.id} member.id=${checkMember.member.id}\n%j`,
+                        err,
                     );
-                    strapi.log.warn(err);
                 });
         }
 

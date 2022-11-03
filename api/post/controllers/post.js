@@ -45,8 +45,7 @@ module.exports = {
         }
         if (post && post.type !== ENUM_POST_TYPE_SURVEY_RESPONSE && post.type !== ENUM_POST_TYPE_POLL_RESPONSE) {
             strapi.services.follow.createMyComment(getValueId(ctx.state.user.user_feed), post.id).catch((err) => {
-                strapi.log.warn(`follow.createMyComment failed: post.id = ${post.id}`);
-                strapi.log.warn(err);
+                strapi.log.warn(`follow.createMyComment failed: post.id = ${post.id}\n%j`, err);
             });
         }
         return sanitizePost(post);

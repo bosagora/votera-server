@@ -66,14 +66,12 @@ async function processReportOnPost(postId, proposalId) {
                 },
             );
         } catch (e1) {
-            strapi.log.warn(`post.processReportOnPost update interaction failed: post.id = ${postId}`);
-            strapi.log.warn(e1);
+            strapi.log.warn(`post.processReportOnPost update interaction failed: post.id = ${postId}\n%j`, e1);
         }
 
         return post;
     } catch (err) {
-        strapi.log.warn(`post.processReportOnPost failed: post.id = ${postId}`);
-        strapi.log.warn(err);
+        strapi.log.warn(`post.processReportOnPost failed: post.id = ${postId}\n%j`, err);
         throw convertQueryOperationError(err);
     }
 }
@@ -113,13 +111,11 @@ async function processRestoreOnPost(postId, proposalId) {
                 },
             );
         } catch (e1) {
-            strapi.log.warn(`post.processRestoreOnPost update interfaction failed: post.id = ${postId}`);
-            strapi.log.warn(e1);
+            strapi.log.warn(`post.processRestoreOnPost update interfaction failed: post.id = ${postId}\n%j`, e1);
         }
         return post;
     } catch (err) {
-        strapi.log.warn(`post.processRestoreOnPost failed: post.id = ${postId}`);
-        strapi.log.warn(err);
+        strapi.log.warn(`post.processRestoreOnPost failed: post.id = ${postId}\n%j`, err);
         throw convertQueryOperationError(err);
     }
 }
@@ -257,8 +253,7 @@ module.exports = {
             const status = await this.postStatus(postId, user);
             return { interaction, post, status };
         } catch (err) {
-            strapi.log.warn(`post.createReportPost failed: postId = ${postId} memberId = ${memberId}`);
-            strapi.log.warn(err);
+            strapi.log.warn(`post.createReportPost failed: postId = ${postId} memberId = ${memberId}\n%j`, err);
             throw convertQueryOperationError(err);
         }
     },
@@ -281,8 +276,7 @@ module.exports = {
                 status: await this.postStatus(postId, user),
             };
         } catch (err) {
-            strapi.log.warn(`post.deleteReportPost failed: postId = ${postId} memberId = ${memberId}`);
-            strapi.log.warn(err);
+            strapi.log.warn(`post.deleteReportPost failed: postId = ${postId} memberId = ${memberId}\n%j`, err);
             throw convertQueryOperationError(err);
         }
     },
@@ -333,8 +327,7 @@ module.exports = {
             const status = await this.postStatus(postId, user);
             return { isLike, post, status };
         } catch (e) {
-            strapi.log.warn(`togglePostLike failed: post.id = ${postId} member.id = ${memberId}`);
-            strapi.log.warn(e);
+            strapi.log.warn(`togglePostLike failed: post.id = ${postId} member.id = ${memberId}\n%j`, e);
             throw convertQueryOperationError(e);
         }
     },

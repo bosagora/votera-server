@@ -74,8 +74,7 @@ module.exports = {
             }
             return userFeed;
         } catch (err) {
-            strapi.log.warn(`user-feed.updateUserPushToken failed: user-feed.id = ${id}`);
-            strapi.log.warn(err);
+            strapi.log.warn(`user-feed.updateUserPushToken failed: user-feed.id=${id}\n%j`, err);
             throw convertQueryOperationError(err);
         }
     },
@@ -84,8 +83,7 @@ module.exports = {
             const userFeed = await strapi.query('user-feed').update({ id }, alarmStatus);
             return userFeed;
         } catch (err) {
-            strapi.log.warn(`user-feed.updateUserAlarmStatus failed: user-feed.id = ${id}`);
-            strapi.log.warn(err);
+            strapi.log.warn(`user-feed.updateUserAlarmStatus failed: user-feed.id=${id}\n%j`, err);
             throw convertQueryOperationError(err);
         }
     },

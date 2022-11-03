@@ -297,8 +297,7 @@ async function saveFeeds(userFeeds, feed) {
         return { ...feed, target: getValueId(userFeed.user) };
     });
     Promise.all(targets.map((target) => strapi.query('feeds').create(target))).catch((err) => {
-        strapi.log.warn('saveFeeds failed');
-        strapi.log.warn(err);
+        strapi.log.warn('saveFeeds failed\n%j', err);
     });
     // if (!insertManyFeeds) {
     //     chooseModelFunction();

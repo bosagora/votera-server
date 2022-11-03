@@ -102,14 +102,10 @@ module.exports = {
                         break;
                 }
                 if (result.type === ENUM_INTERACTION_TYPE_LIKE_POST) {
-                    strapi.services.notification.onInteractionCreated(result).catch((err) => {
-                        strapi.log.warn(`notification.interactionCreated failed: interaction.id = ${result.id}`);
-                        strapi.log.warn(err);
-                    });
+                    strapi.services.notification.onInteractionCreated(result);
                 }
             } catch (err) {
-                strapi.log.warn(`interaction.afterCreate failed: interaction.id = ${result.id}`);
-                strapi.log.warn(err);
+                strapi.log.warn(`interaction.afterCreate failed: interaction.id=${result.id}\n%j`, err);
             }
         },
         async beforeUpdate(params, data) {
@@ -160,7 +156,7 @@ module.exports = {
                     }
                 }
             } catch (err) {
-                console.log('interaction.beforeUpdate catch: ', err);
+                strapi.log.warn('interaction.beforeUpdate catch: ', err);
             }
         },
         async afterDelete(result, params) {
@@ -176,7 +172,7 @@ module.exports = {
                     await interactionDeleted(result);
                 }
             } catch (err) {
-                console.log('interaction.afterDelete catch: ', err);
+                strapi.log.warn('interaction.afterDelete catch: ', err);
             }
         },
     },

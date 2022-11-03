@@ -20,8 +20,7 @@ module.exports = {
                 await strapi.query('feed').delete({ createdAt_lt: deleteDate });
             }
         } catch (err) {
-            strapi.log.warn('feed.batchJob failed');
-            strapi.log.warn(err);
+            strapi.log.warn('feed.batchJob failed\n%j', err);
         }
     },
 };

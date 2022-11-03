@@ -13,12 +13,10 @@ module.exports = {
                     type: result.type,
                 };
                 strapi.services.pubsub.publish('listenFeed', { listenFeed }).catch((err) => {
-                    strapi.log.warn(`publish.listenFeed failed: feeds.id = ${result.id}`);
-                    strapi.log.warn(err);
+                    strapi.log.warn(`publish.listenFeed failed: feeds.id = ${result.id}\n%j`, err);
                 });
             } catch (err) {
-                strapi.log.warn(`feeds.afterCreate failed: feeds.id = ${result.id}`);
-                strapi.log.warn(err);
+                strapi.log.warn(`feeds.afterCreate failed: feeds.id = ${result.id}\n%j`, err);
             }
         },
     },
