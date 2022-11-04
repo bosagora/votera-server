@@ -21,7 +21,7 @@ module.exports = {
         if (proposal.timeAlarm_notified) {
             return;
         }
-        strapi.log.debug('notification.onProposalUpdated proposal.id = ', proposal.id);
+        strapi.log.debug('notification.onProposalTimeAlarm proposal.id = ', proposal.id);
         strapi
             .query('proposal')
             .update({ id: proposal.id }, { timeAlarm_notified: true })
