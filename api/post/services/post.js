@@ -128,20 +128,25 @@ function getAction(interaction) {
 }
 
 module.exports = {
-    async readArticle(post, actor, user) {
+    async readArticle(postId, actor, user) {
         if (!increaseInteractionReadCount) {
             chooseModelFunction();
         }
 
+        const post = await strapi.query('post').findOne({ id: postId });
+        if (!post) {
+            throw strapi.errors.notFound('notFound post');
+        }
+
         let interaction = await strapi
             .query('interaction')
-            .findOne({ post, actor, type: ENUM_INTERACTION_TYPE_READ_POST });
+            .findOne({ post: post.id, actor, type: ENUM_INTERACTION_TYPE_READ_POST });
         if (interaction) {
             await increaseInteractionReadCount(interaction);
         } else {
             interaction = await strapi.query('interaction').create({
                 type: ENUM_INTERACTION_TYPE_READ_POST,
-                post,
+                post: post.id,
                 actor,
                 action: [
                     {
@@ -154,8 +159,8 @@ module.exports = {
         }
 
         return {
-            post: await strapi.query('post').findOne({ id: post }),
-            interaction: await strapi.query('interaction').findOne({ id: interaction.id }),
+            post: await strapi.query('post').findOne({ id: postId }),
+            status: { id: post.id, isRead: true },
         };
     },
     async postStatus(id, user) {
@@ -223,23 +228,32 @@ module.exports = {
         const statuses = await Promise.all(values.map((value) => this.postStatus(value.id, user)));
         return { count, values, statuses };
     },
-    async createReportPost(postId, activityId, proposalId, memberId, user) {
+    async createReportPost(postId, activityId, memberId, user) {
         try {
+            let post = await strapi.query('post').findOne({ id: postId }, []);
+            if (!post) {
+                throw strapi.errors.notFound('notFound post');
+            }
+            const activity = await strapi.query('activity').findOne({ id: activityId }, []);
+            if (!activity) {
+                throw strapi.errors.notFound('notFound activity');
+            }
+
             // check duplication
             let interaction = await strapi.query('interaction').findOne({
                 type: ENUM_INTERACTION_TYPE_REPORT_POST,
-                activity: activityId,
-                post: postId,
-                proposal: proposalId,
+                activity: activity.id,
+                post: post.id,
+                proposal: activity.proposal,
                 user: user.id,
             });
             if (!interaction) {
                 interaction = await strapi.query('interaction').create({
                     type: ENUM_INTERACTION_TYPE_REPORT_POST,
-                    activity: activityId,
-                    post: postId,
+                    activity: activity.id,
+                    post: post.id,
                     actor: memberId,
-                    proposal: proposalId,
+                    proposal: activity.proposal,
                     user: user.id,
                     action: [
                         {
@@ -249,22 +263,32 @@ module.exports = {
                     ],
                 });
             }
-            const post = await processReportOnPost(postId, proposalId);
-            const status = await this.postStatus(postId, user);
+            post = await processReportOnPost(post.id, activity.proposal);
+            const status = await this.postStatus(post.id, user);
             return { interaction, post, status };
         } catch (err) {
             strapi.log.warn(`post.createReportPost failed: postId = ${postId} memberId = ${memberId}\n%j`, err);
             throw convertQueryOperationError(err);
         }
     },
-    async deleteReportPost(postId, activityId, proposalId, memberId, user) {
+    async deleteReportPost(postId, activityId, memberId, user) {
         try {
+            const post = await strapi.query('post').findOne({ id: postId });
+            if (!post) {
+                throw strapi.errors.notFound('notFound post');
+            }
+
+            const activity = await strapi.query('activity').findOne({ id: activityId }, []);
+            if (!activity) {
+                throw strapi.errors.notFound('notFound activity');
+            }
+
             // check existence
             let interaction = await strapi.query('interaction').findOne({
                 type: ENUM_INTERACTION_TYPE_REPORT_POST,
-                activity: activityId,
-                post: postId,
-                proposal: proposalId,
+                activity: activity.id,
+                post: post.id,
+                proposal: activity.proposal,
                 user: user.id,
             });
             if (interaction) {
@@ -272,8 +296,8 @@ module.exports = {
             }
             return {
                 interaction,
-                post: await processRestoreOnPost(postId, proposalId),
-                status: await this.postStatus(postId, user),
+                post: await processRestoreOnPost(post.id, activity.proposal),
+                status: await this.postStatus(post.id, user),
             };
         } catch (err) {
             strapi.log.warn(`post.deleteReportPost failed: postId = ${postId} memberId = ${memberId}\n%j`, err);

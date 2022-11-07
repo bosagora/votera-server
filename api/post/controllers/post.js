@@ -95,7 +95,7 @@ module.exports = {
         };
     },
     async readArticle(ctx) {
-        const { id } = ctx.params;
+        const { id } = ctx.request.body;
         if (!id) {
             return ctx.badRequest('missing parameter');
         }
@@ -107,24 +107,18 @@ module.exports = {
             return ctx.unauthorized('unauthorized missing member');
         }
 
-        const response = strapi.services.post.readArticle(id, user.member.id, user);
+        const response = await strapi.services.post.readArticle(id, user.member.id, user);
         return {
             post: sanitizePost(response.post),
-            interaction: sanitizeEntity(response.interaction, { model: strapi.models.interaction }),
+            status: response.status,
         };
     },
     async reportPost(ctx) {
-        const { postId, activityId, proposalId, actor } = ctx.request.body;
-        if (!postId || !activityId || !proposalId || !actor) return ctx.throw(400, 'missing parameter');
+        const { postId, activityId, actor } = ctx.request.body;
+        if (!postId || !activityId || !actor) return ctx.throw(400, 'missing parameter');
         await strapi.services.member.authorizeMember(actor, ctx.state.user);
 
-        const result = await strapi.services.post.createReportPost(
-            postId,
-            activityId,
-            proposalId,
-            actor,
-            ctx.state.user,
-        );
+        const result = await strapi.services.post.createReportPost(postId, activityId, actor, ctx.state.user);
         return {
             interaction: sanitizeEntity(result.interaction, { model: strapi.models.interaction }),
             post: sanitizePost(result.post),
@@ -132,17 +126,11 @@ module.exports = {
         };
     },
     async restorePost(ctx) {
-        const { postId, activityId, proposalId, actor } = ctx.request.body;
-        if (!postId || !activityId || !proposalId || !actor) return ctx.throw(400, 'missing parameter');
+        const { postId, activityId, actor } = ctx.request.body;
+        if (!postId || !activityId || !actor) return ctx.throw(400, 'missing parameter');
         await strapi.services.member.authorizeMember(actor, ctx.state.user);
 
-        const result = await strapi.services.post.deleteReportPost(
-            postId,
-            activityId,
-            proposalId,
-            actor,
-            ctx.state.user,
-        );
+        const result = await strapi.services.post.deleteReportPost(postId, activityId, actor, ctx.state.user);
         return {
             interaction: sanitizeEntity(result.interaction, { model: strapi.models.interaction }),
             post: sanitizePost(result.post),
