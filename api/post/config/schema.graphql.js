@@ -2,15 +2,15 @@
 
 module.exports = {
     definition: `
-        type ReadArticlePayload {
-            post: Post
-            interaction: Interaction
-        }
         type PostStatus {
             id: ID!
             isLike: Boolean
             isReported: Boolean
             isRead: Boolean
+        }
+        type ReadArticlePayload {
+            post: Post
+            status: PostStatus
         }
         type ActivityPostsPayload {
             count: Int
@@ -25,7 +25,6 @@ module.exports = {
         input ReportPostInputData {
             postId: ID!
             activityId: ID!
-            proposalId: ID!
             actor: ID! 
         }
         input ReportPostInput {

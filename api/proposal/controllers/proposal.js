@@ -31,6 +31,13 @@ module.exports = {
         });
         return sanitizeEntity(proposal, { model: strapi.models.proposal });
     },
+    async findByActivity(ctx) {
+        const { _activityId } = ctx.params;
+        const activity = await strapi.services.activity.findOne({ id: _activityId }, []);
+        if (!activity) return ctx.notFound('notFound activity');
+        const proposal = await strapi.services.proposal.findOne({ id: activity.proposal });
+        return sanitizeEntity(proposal, { model: strapi.models.proposal });
+    },
     async findInfo(ctx) {
         const { _proposalId } = ctx.params;
         if (!_proposalId) return ctx.badRequest('missing parameter');
@@ -43,6 +50,17 @@ module.exports = {
         const proposal = await strapi.services.proposal.findOne({
             proposalId: _proposalId,
         });
+        if (!proposal) {
+            return null;
+        }
+        const status = await strapi.services.proposal.proposalStatus(proposal.id, ctx.state.user);
+        return status;
+    },
+    async statusByActivity(ctx) {
+        const { _activityId } = ctx.params;
+        const activity = await strapi.services.activity.findOne({ id: _activityId }, []);
+        if (!activity) return ctx.notFound('notFound activity');
+        const proposal = await strapi.services.proposal.findOne({ id: activity.proposal });
         if (!proposal) {
             return null;
         }

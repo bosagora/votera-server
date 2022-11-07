@@ -120,7 +120,9 @@ module.exports = {
     `,
     query: `
         proposalById(proposalId: String!): Proposal
+        proposalByActivity(activityId: String!): Proposal
         proposalStatusById(proposalId: String!): ProposalStatus
+        proposalStatusByActivity(activityId: String!): ProposalStatus
         proposalFee(proposalId: String!): ProposalFeePayload
         checkProposalFee(proposalId: String!, transactionHash: String!): CheckProposalFeePayload
         listProposal(where: JSON, sort: String, limit: Int, start: Int): ListProposalPayload
@@ -139,9 +141,17 @@ module.exports = {
                 description: 'Get a API Proposal by proposalId',
                 resolver: 'application::proposal.proposal.findById',
             },
+            proposalByActivity: {
+                description: 'Get a API Proposal by activityId',
+                resolver: 'application::proposal.proposal.findByActivity',
+            },
             proposalStatusById: {
                 description: 'Get a status for proposal by proposalId',
                 resolver: 'application::proposal.proposal.statusById',
+            },
+            proposalStatusByActivity: {
+                description: 'Get a status for proposal by activityId',
+                resolver: 'application::proposal.proposal.statusByActivity',
             },
             proposalFee: {
                 description: 'Get Proposal Fee',

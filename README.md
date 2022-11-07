@@ -153,7 +153,7 @@ Votera Server (Using strapi server)
 |Application|Member|all|
 |Application|Member-Role|count,find,findone|
 |Application|Post|activityPosts, count, create, find, findone, listPosts, postComments, postStatus, readArticle, reportPost, restorePost, togglePostLike, update|
-|Application|Proposal|assessResult, checkProposalFee, count, create, feePolicy, find, findbyid, findinfo, findone, joinProposal, listProposal, proposalFee, statusById, submitAssess, voteCount, voteStatus|
+|Application|Proposal|assessResult, checkProposalFee, count, create, feePolicy, find, findByActivity, findbyid, findinfo, findone, joinProposal, listProposal, proposalFee, statusByActivity, statusById, submitAssess, voteCount, voteStatus|
 |Application|Transaction|updateReceipt|
 |Application|Validator|count,find,findone,getsignindomain,getsignupdomain,isvalidator,listAssessValidators,listBallotValidators|
 |Application|Version|find|
@@ -168,7 +168,7 @@ Votera Server (Using strapi server)
 |Application|Member|checkdupusername, count, find, findone, ismember, signinmember, signupmember|
 |Application|MemberRole|count, find, findone|
 |Application|Post|activityPosts, count, find, findone, listPosts, postComments, postStatus|
-|Application|Proposal|assessResult, checkProposalFee, count, feePolicy, find, findbyid, findInfo, findone, listProposal, proposalFee, statusById, voteCount, voteStatus|
+|Application|Proposal|assessResult, checkProposalFee, count, feePolicy, find, findByActivity, findbyid, findInfo, findone, listProposal, proposalFee, statusByActivity, statusById, voteCount, voteStatus|
 |Application|Transaction|updateReceipt|
 |Application|Validator|count, find, findone, getsignindomain,getsignupdomain,isvalidator,listAssessValidators, listBallotValidators|
 |Application|Version|find|
@@ -357,3 +357,24 @@ Edit Object Ownership
 select ACLs enabled
 select Bucket owner preferred
 
+
+### Redis Configuration
+
+    $ sudo apt update
+    $ sudo apt upgrade
+    $ sudo apt install redis-server
+
+Edit Redis configuration
+
+    $ sudo vi /etc/redis/redis.conf
+
+    requirepass
+    bind
+    port
+    maxmemory
+    maxmemory-policy   allkeys-lru
+
+Restart and register to auto start 
+
+    $ sudo systemctl restart redis-server
+    $ sudo systemctl enable redis-server
