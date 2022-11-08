@@ -28,6 +28,9 @@ module.exports = {
         await strapi.services.cronjob.tryLock('lock:batch:proposalAssess', async () => {
             await strapi.services.proposal.batchJobForAssess();
         });
+    },
+    '1 * * * *': async () => {
+        // every hour at 1 minute (because of openTime in vote)
         await strapi.services.cronjob.tryLock('lock:batch:proposalVote', async () => {
             await strapi.services.proposal.batchJobForVote();
         });
