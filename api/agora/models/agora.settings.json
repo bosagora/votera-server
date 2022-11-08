@@ -41,6 +41,12 @@
     },
     "boaScanUrl": {
       "type": "string"
+    },
+    "privacyTermKoUrl": {
+      "type": "string"
+    },
+    "userServiceTermKoUrl": {
+      "type": "string"
     }
   }
 }
