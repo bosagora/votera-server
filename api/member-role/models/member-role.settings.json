@@ -49,6 +49,7 @@
       "default": "PENDING"
     },
     "proposal": {
+      "via": "member_roles",
       "model": "proposal"
     }
   }

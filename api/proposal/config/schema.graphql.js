@@ -126,6 +126,7 @@ module.exports = {
         proposalFee(proposalId: String!): ProposalFeePayload
         checkProposalFee(proposalId: String!, transactionHash: String!): CheckProposalFeePayload
         listProposal(where: JSON, sort: String, limit: Int, start: Int): ListProposalPayload
+        listJoinProposal(sort: String, limit: Int, start: Int): ListProposalPayload
         feePolicy: FeePolicyPayload
         assessResult(proposalId: String!, actor: String): AssessResultPayload
         voteStatus(proposalId: String!, actor: String): VoteStatusPayload
@@ -164,6 +165,10 @@ module.exports = {
             listProposal: {
                 description: 'Query proposal',
                 resolver: 'application::proposal.proposal.listProposal',
+            },
+            listJoinProposal: {
+                description: 'Query Join proposal',
+                resolver: 'application::proposal.proposal.listJoinProposal',
             },
             feePolicy: {
                 description: 'Query Policy of Fee',
