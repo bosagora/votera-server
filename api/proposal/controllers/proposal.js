@@ -153,6 +153,19 @@ module.exports = {
             statuses: response.statuses,
         };
     },
+    async listJoinProposal(ctx) {
+        const { params } = ctx;
+        if (!ctx.state.user) return ctx.unauthorized('unauthorized');
+        const user = ctx.state.user;
+        if (!user.member) return ctx.unauthorized('unauthorized');
+
+        const response = await strapi.services.proposal.listJoinProposal(params, ctx.state.user);
+        return {
+            count: response.count,
+            values: response.values.map((value) => sanitizeEntity(value, { model: strapi.models.proposal })),
+            statuses: response.statuses,
+        };
+    },
     async proposalFee(ctx) {
         const { _proposalId } = ctx.params;
         if (!_proposalId) return ctx.badRequest('missing parameter');

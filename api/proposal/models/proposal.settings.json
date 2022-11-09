@@ -155,6 +155,11 @@
     },
     "createTx": {
       "type": "string"
+    },
+    "member_roles": {
+      "private": true,
+      "collection": "member-role",
+      "via": "proposal"
     }
   }
 }

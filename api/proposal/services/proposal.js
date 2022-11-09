@@ -1216,11 +1216,14 @@ module.exports = {
     },
     async checkJoinMember(proposalId, memberId) {
         // 이미 join 되었는지 확인 (type, status 는 우선은 확인하지 않음)
-        const found = await strapi.query('member-role').findOne({
-            scope: ENUM_MEMBERROLE_SCOPE_PROPOSAL,
-            member: memberId,
-            proposal: proposalId,
-        });
+        const found = await strapi.query('member-role').findOne(
+            {
+                scope: ENUM_MEMBERROLE_SCOPE_PROPOSAL,
+                member: memberId,
+                proposal: proposalId,
+            },
+            [],
+        );
         return found ? true : false;
     },
     async proposalStatus(id, user) {
@@ -1233,7 +1236,7 @@ module.exports = {
 
         const founds = await strapi
             .query('interaction')
-            .find({ type: ENUM_INTERACTION_TYPE_LIKE_PROPOSAL, proposal: id, actor: user.member.id });
+            .find({ type: ENUM_INTERACTION_TYPE_LIKE_PROPOSAL, proposal: id, actor: user.member.id }, []);
         for (let i = 0; i < founds?.length; i += 1) {
             const found = founds[i];
             if (found.type === ENUM_INTERACTION_TYPE_LIKE_PROPOSAL) {
@@ -1241,18 +1244,33 @@ module.exports = {
             }
         }
 
-        const roleFound = await strapi.query('member-role').findOne({
-            scope: ENUM_MEMBERROLE_SCOPE_PROPOSAL,
-            member: user.member.id,
-            status: ENUM_MEMBERROLE_STATUS_NORMAL,
-            proposal: id,
-        });
+        const roleFound = await strapi.query('member-role').findOne(
+            {
+                scope: ENUM_MEMBERROLE_SCOPE_PROPOSAL,
+                member: user.member.id,
+                status: ENUM_MEMBERROLE_STATUS_NORMAL,
+                proposal: id,
+            },
+            [],
+        );
         isJoined = !!roleFound;
         return { id, isLike, isJoined };
     },
     async listProposal(params, user) {
         const count = await strapi.query('proposal').count(params);
-        const values = await strapi.query('proposal').find(params);
+        const values = await strapi.query('proposal').find(params, []);
+        const statuses = await Promise.all(values.map((value) => this.proposalStatus(value.id, user)));
+        return { count, values, statuses };
+    },
+    async listJoinProposal(params, user) {
+        const memberId = getValueId(user.member);
+        const where = {
+            'member_roles.scope': ENUM_MEMBERROLE_SCOPE_PROPOSAL,
+            'member_roles.status': ENUM_MEMBERROLE_STATUS_NORMAL,
+            'member_roles.member': memberId,
+        };
+        const count = await strapi.query('proposal').count({ _where: where });
+        const values = await strapi.query('proposal').find({ ...params, _where: where }, []);
         const statuses = await Promise.all(values.map((value) => this.proposalStatus(value.id, user)));
         return { count, values, statuses };
     },
