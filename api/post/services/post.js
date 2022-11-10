@@ -4,6 +4,7 @@ const {
     connectionIsMongoose,
     increaseInteractionReadCountMongoose,
     increaseInteractionReadCountBookshelf,
+    getValueId,
 } = require('../../../src/util/strapi_helper');
 const { convertQueryOperationError } = require('../../../src/util/serviceError');
 const { ENUM_POST_STATUS_DELETED, ENUM_POST_STATUS_OPEN } = require('../../../src/types/post');
@@ -11,7 +12,13 @@ const {
     ENUM_INTERACTION_TYPE_LIKE_POST,
     ENUM_INTERACTION_TYPE_REPORT_POST,
     ENUM_INTERACTION_TYPE_READ_POST,
+    ENUM_INTERACTION_ACTION_READ,
+    ENUM_INTERACTION_ACTION_LIKE,
+    ENUM_INTERACTION_ACTION_REPORT,
 } = require('../../../src/types/interaction');
+const { ENUM_MEMBERROLE_SCOPE_PROPOSAL, ENUM_MEMBERROLE_STATUS_NORMAL } = require('../../../src/types/member-role');
+
+const FETCH_LIMIT = 100;
 
 let increaseInteractionReadCount;
 
@@ -59,7 +66,7 @@ async function processReportOnPost(postId, proposalId) {
                 {
                     action: [
                         {
-                            __component: 'interaction.report',
+                            __component: ENUM_INTERACTION_ACTION_REPORT,
                             status: 'RESOLVED',
                         },
                     ],
@@ -104,7 +111,7 @@ async function processRestoreOnPost(postId, proposalId) {
                 {
                     action: [
                         {
-                            __component: 'interaction.report',
+                            __component: ENUM_INTERACTION_ACTION_REPORT,
                             status: 'UNRESOLVED',
                         },
                     ],
@@ -138,6 +145,8 @@ module.exports = {
             throw strapi.errors.notFound('notFound post');
         }
 
+        const activity = getValueId(post.activity);
+
         let interaction = await strapi
             .query('interaction')
             .findOne({ post: post.id, actor, type: ENUM_INTERACTION_TYPE_READ_POST });
@@ -146,11 +155,12 @@ module.exports = {
         } else {
             interaction = await strapi.query('interaction').create({
                 type: ENUM_INTERACTION_TYPE_READ_POST,
+                activity,
                 post: post.id,
                 actor,
                 action: [
                     {
-                        __component: 'interaction.read',
+                        __component: ENUM_INTERACTION_ACTION_READ,
                         count: 1,
                     },
                 ],
@@ -257,7 +267,7 @@ module.exports = {
                     user: user.id,
                     action: [
                         {
-                            __component: 'interaction.report',
+                            __component: ENUM_INTERACTION_ACTION_REPORT,
                             status: 'UNRESOLVED',
                         },
                     ],
@@ -314,13 +324,13 @@ module.exports = {
             if (isLike) {
                 if (foundInteraction) {
                     const action = getAction(foundInteraction);
-                    if (!action || action.__component !== 'interaction.like' || action.type !== 'LIKE') {
+                    if (!action || action.__component !== ENUM_INTERACTION_ACTION_LIKE || action.type !== 'LIKE') {
                         await strapi.services.interaction.update(
                             { id: foundInteraction.id },
                             {
                                 action: [
                                     {
-                                        __component: 'interaction.like',
+                                        __component: ENUM_INTERACTION_ACTION_LIKE,
                                         type: 'LIKE',
                                     },
                                 ],
@@ -332,7 +342,7 @@ module.exports = {
                         type: ENUM_INTERACTION_TYPE_LIKE_POST,
                         action: [
                             {
-                                __component: 'interaction.like',
+                                __component: ENUM_INTERACTION_ACTION_LIKE,
                                 type: 'LIKE',
                             },
                         ],
@@ -353,6 +363,67 @@ module.exports = {
         } catch (e) {
             strapi.log.warn(`togglePostLike failed: post.id = ${postId} member.id = ${memberId}\n%j`, e);
             throw convertQueryOperationError(e);
+        }
+    },
+    async createDefaultReadCount(post) {
+        const writerId = getValueId(post.writer);
+        const activityId = getValueId(post.activity);
+        let proposal;
+        if (post.activity?.id) {
+            proposal = getValueId(post.activity.proposal);
+        } else {
+            const activity = await strapi.query('activity').findOne({ id: activityId }, []);
+            proposal = getValueId(activity.proposal);
+        }
+        let founds = await strapi.query('member-role').find(
+            {
+                scope: ENUM_MEMBERROLE_SCOPE_PROPOSAL,
+                status: ENUM_MEMBERROLE_STATUS_NORMAL,
+                proposal,
+                _sort: 'id',
+                _limit: FETCH_LIMIT,
+            },
+            ['member'],
+        );
+        while (founds.length > 0) {
+            await Promise.all(
+                founds.map((found) => {
+                    const actor = getValueId(found.member);
+                    const user = found.member.user ? getValueId(found.member.user) : undefined;
+
+                    if (actor === writerId) {
+                        return;
+                    }
+                    return strapi.query('interaction').create({
+                        type: ENUM_INTERACTION_TYPE_READ_POST,
+                        activity: activityId,
+                        post: post.id,
+                        actor,
+                        action: [
+                            {
+                                __component: ENUM_INTERACTION_ACTION_READ,
+                                count: 0,
+                            },
+                        ],
+                        user,
+                    });
+                }),
+            );
+            if (founds.length < FETCH_LIMIT) {
+                break;
+            }
+            const lastId = founds[founds.length - 1].id;
+            founds = await strapi.query('member-role').find(
+                {
+                    scope: ENUM_MEMBERROLE_SCOPE_PROPOSAL,
+                    status: ENUM_MEMBERROLE_STATUS_NORMAL,
+                    proposal,
+                    id_gt: lastId,
+                    _sort: 'id',
+                    _limit: FETCH_LIMIT,
+                },
+                ['member'],
+            );
         }
     },
 };

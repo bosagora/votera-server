@@ -6,6 +6,7 @@ const {
     ENUM_INTERACTION_TYPE_READ_ACTIVITY,
     ENUM_INTERACTION_TYPE_READ_POST,
     ENUM_INTERACTION_TYPE_REPORT_POST,
+    ENUM_INTERACTION_ACTION_READ,
 } = require('../../../src/types/interaction');
 const {
     connectionIsMongoose,
@@ -54,7 +55,7 @@ async function interactionDeleted(interaction) {
         case ENUM_INTERACTION_TYPE_READ_ACTIVITY:
             if (interaction.action?.length) {
                 const action = interaction.action[0];
-                if (action?.__component === 'interaction.read') {
+                if (action?.__component === ENUM_INTERACTION_ACTION_READ) {
                     await increaseActivityReadCount(interaction.activity?.id, -action.count);
                 }
             }
@@ -62,7 +63,7 @@ async function interactionDeleted(interaction) {
         case ENUM_INTERACTION_TYPE_READ_POST:
             if (interaction.action?.length) {
                 const action = interaction.action[0];
-                if (action?.__component === 'interaction.read') {
+                if (action?.__component === ENUM_INTERACTION_ACTION_READ) {
                     await increasePostReadCount(interaction.post?.id, -action.count);
                 }
             }
@@ -90,10 +91,20 @@ module.exports = {
                         await increasePostLikeCount(result.post?.id, 1);
                         break;
                     case ENUM_INTERACTION_TYPE_READ_ACTIVITY:
-                        await increaseActivityReadCount(result.activity?.id, 1);
+                        if (data.action && data.action.length > 0) {
+                            const action = data.action[0];
+                            if (action.__component === ENUM_INTERACTION_ACTION_READ && action.count > 0) {
+                                await increaseActivityReadCount(result.activity?.id, action.count);
+                            }
+                        }
                         break;
                     case ENUM_INTERACTION_TYPE_READ_POST:
-                        await increasePostReadCount(result.post?.id, 1);
+                        if (data.action && data.action.length > 0) {
+                            const action = data.action[0];
+                            if (action.__component === ENUM_INTERACTION_ACTION_READ && action.count > 0) {
+                                await increasePostReadCount(result.post?.id, action.count);
+                            }
+                        }
                         break;
                     case ENUM_INTERACTION_TYPE_REPORT_POST:
                         await increasePostReportCount(result.post?.id, 1);
@@ -117,7 +128,7 @@ module.exports = {
                     return;
                 }
                 const action = data.action[0];
-                if (action?.__component !== 'interaction.read') {
+                if (action?.__component !== ENUM_INTERACTION_ACTION_READ) {
                     return;
                 }
 
@@ -139,7 +150,7 @@ module.exports = {
                             }
                         } else {
                             const foundAction = interaction.action[0];
-                            if (foundAction?.component !== 'interaction.read') {
+                            if (foundAction?.component !== ENUM_INTERACTION_ACTION_READ) {
                                 // This is error case
                                 continue;
                             }

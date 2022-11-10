@@ -151,22 +151,21 @@ Votera Server (Using strapi server)
 |Application|Ballot|submitBallot,recordBallot,listMyBallots|
 |Application|Feeds|count, feedsStatus, find, findone, listFeeds, update|
 |Application|Member|all|
-|Application|Post|activityPosts, count, create, find, findone, listPosts, postComments, postStatus, readArticle, reportPost, restorePost, togglePostLike, update|
-|Application|Proposal|assessResult, checkProposalFee, count, create, feePolicy, find, findByActivity, findbyid, findinfo, findone, joinProposal, listProposal, listJoinProposal, proposalFee, statusByActivity, statusById, submitAssess, voteCount, voteStatus|
+|Application|Post|activityPosts, count, create, find, findone, postComments, postStatus, readArticle, reportPost, restorePost, togglePostLike, update|
+|Application|Proposal|assessResult, checkProposalFee, count, create, feePolicy, find, findByActivity, findbyid, findinfo, findone, joinProposal, listProposal, listJoinProposal, noticeStatus, proposalFee, statusByActivity, statusById, submitAssess, voteCount, voteStatus|
 |Application|Transaction|updateReceipt|
 |Application|Validator|count,find,findone,getsignindomain,getsignupdomain,isvalidator,listAssessValidators,listBallotValidators|
 |Application|Version|find|
 |Upload|Upload|upload|
 |Users-Permissions|User|me, updateuseralarmstatus, updateuserpushtoken|
 
-
 ### method for Public permission
 |Plugin|Name|Method|
 |------|----|------|
 |Application|Agora|find|
 |Application|Member|checkdupusername, count, find, findone, ismember, signinmember, signupmember|
-|Application|Post|activityPosts, count, find, findone, listPosts, postComments, postStatus|
-|Application|Proposal|assessResult, checkProposalFee, count, feePolicy, find, findByActivity, findbyid, findInfo, findone, listProposal, proposalFee, statusByActivity, statusById, voteCount, voteStatus|
+|Application|Post|activityPosts, count, find, findone, postComments, postStatus|
+|Application|Proposal|assessResult, checkProposalFee, count, feePolicy, find, findByActivity, findbyid, findInfo, findone, listProposal, noticeStatus, proposalFee, statusByActivity, statusById, voteCount, voteStatus|
 |Application|Transaction|updateReceipt|
 |Application|Validator|count, find, findone, getsignindomain,getsignupdomain,isvalidator,listAssessValidators, listBallotValidators|
 |Application|Version|find|
