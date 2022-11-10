@@ -3,12 +3,14 @@
 const {
     ENUM_INTERACTION_TYPE_READ_ACTIVITY,
     ENUM_INTERACTION_TYPE_READ_POST,
+    ENUM_INTERACTION_ACTION_READ,
 } = require('../../../src/types/interaction');
 const { convertQueryOperationError } = require('../../../src/util/serviceError');
 const {
     connectionIsMongoose,
     increaseInteractionReadCountMongoose,
     increaseInteractionReadCountBookshelf,
+    getValueId,
 } = require('../../../src/util/strapi_helper');
 
 let increaseInteractionReadCount;
@@ -42,18 +44,25 @@ module.exports = {
                 await increaseInteractionReadCount(foundInteraction);
                 interactionId = foundInteraction.id;
             } else {
+                let activity;
+                if (isTypeActivity) {
+                    activity = id;
+                } else {
+                    const post = await strapi.query('post').findOne({ id }, []);
+                    activity = getValueId(post.activity);
+                }
                 const created = await strapi.services.interaction.create({
                     type,
                     action: [
                         {
-                            __component: 'interaction.read',
+                            __component: ENUM_INTERACTION_ACTION_READ,
                             count: 1,
                         },
                     ],
-                    activity: isTypeActivity ? id : null,
+                    activity,
                     post: isTypeActivity ? null : id,
                     actor,
-                    user: user.id,
+                    user: getValueId(user),
                 });
                 interactionId = created.id;
             }

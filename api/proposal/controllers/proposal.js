@@ -120,6 +120,12 @@ module.exports = {
 
         return sanitizeEntity(proposal, { model: strapi.models.proposal });
     },
+    async update(ctx) {
+        return ctx.forbidden();
+    },
+    async delete(ctx) {
+        return ctx.forbidden();
+    },
     async joinProposal(ctx) {
         const { id, actor } = ctx.request.body;
         if (!id || !actor) return ctx.throw(400, 'missing parameter');
@@ -217,5 +223,11 @@ module.exports = {
         const { _proposalId } = ctx.params;
         if (!_proposalId) return ctx.badRequest('missing parameter');
         return await strapi.services.proposal.voteCount(_proposalId);
+    },
+    async noticeStatus(ctx) {
+        const { _activityId } = ctx.params;
+        if (!_activityId) return ctx.badRequest('missing parameter');
+        const user = ctx.state.user;
+        return await strapi.services.proposal.noticeStatus(_activityId, user);
     },
 };

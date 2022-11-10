@@ -1,7 +1,7 @@
 'use strict';
 
 const { parseMultipartData, sanitizeEntity } = require('strapi-utils');
-const { ENUM_POST_TYPE_SURVEY_RESPONSE, ENUM_POST_TYPE_POLL_RESPONSE } = require('../../../src/types/post');
+const { ENUM_POST_TYPE_SURVEY_RESPONSE, ENUM_POST_TYPE_POLL_RESPONSE, ENUM_POST_TYPE_BOARD_ARTICLE } = require('../../../src/types/post');
 const { getValueId } = require('../../../src/util/strapi_helper');
 
 function sanitizePost(entity) {
@@ -19,27 +19,31 @@ module.exports = {
 
         return entities.map((entity) => sanitizePost(entity));
     },
-    async listPosts(ctx) {
-        let entities;
-        if (ctx.query._q) {
-            entities = await strapi.services.post.search(ctx.query, ['childPosts']);
-        } else {
-            entities = await strapi.services.post.find(ctx.query, ['childPosts']);
-        }
-
-        return entities.map((entity) => sanitizePost(entity));
-    },
     async create(ctx) {
         let post;
         if (ctx.is('multipart')) {
             const { data, files } = parseMultipartData(ctx);
-            const { writer } = data ? data : {};
+            const { activity, type, writer } = data ? data : {};
+            if (!activity || !type) return ctx.badRequest('missing parameter');
             await strapi.services.member.authorizeMember(writer, ctx.state.user);
+            if (type === ENUM_POST_TYPE_BOARD_ARTICLE) {
+                // At present, only administrator has activity role
+                await strapi.services['member-role'].checkActivityRole(activity, writer);
+            } else {
+                await strapi.services['member-role'].checkProposalRoleWithActivity(activity, writer);
+            }
 
             post = await strapi.services.post.create(data, { files });
         } else {
-            const { writer } = ctx.request.body;
+            const { activity, type, writer } = ctx.request.body;
+            if (!activity || !type) return ctx.badRequest('missing parameter');
             await strapi.services.member.authorizeMember(writer, ctx.state.user);
+            if (type === ENUM_POST_TYPE_BOARD_ARTICLE) {
+                // At present, only administrator has activity role
+                await strapi.services['member-role'].checkActivityRole(activity, writer);
+            } else {
+                await strapi.services['member-role'].checkProposalRoleWithActivity(activity, writer);
+            }
 
             post = await strapi.services.post.create(ctx.request.body);
         }

@@ -117,6 +117,11 @@ module.exports = {
             assessCount: Int
             ballotCount: Int
         }
+        type NoticeStatusPayload {
+            id: ID!
+            lastUpdateAt: DateTime
+            lastUnreadAt: DateTime
+        }
     `,
     query: `
         proposalById(proposalId: String!): Proposal
@@ -131,6 +136,7 @@ module.exports = {
         assessResult(proposalId: String!, actor: String): AssessResultPayload
         voteStatus(proposalId: String!, actor: String): VoteStatusPayload
         voteCount(proposalId: String!): VoteCountPayload
+        noticeStatus(activityId: String!): NoticeStatusPayload
     `,
     mutation: `
         joinProposal(input: JoinProposalInput!): JoinProposalPayload
@@ -185,6 +191,10 @@ module.exports = {
             voteCount: {
                 description: 'Query vote count of contract',
                 resolver: 'application::proposal.proposal.voteCount',
+            },
+            noticeStatus: {
+                description: 'Query notice status',
+                resolver: 'application::proposal.proposal.noticeStatus',
             },
         },
         Mutation: {

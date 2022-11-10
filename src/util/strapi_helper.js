@@ -1,7 +1,12 @@
 'use strict';
 
 const { ObjectId } = require('mongodb');
-const { ENUM_INTERACTION_TYPE_READ_ACTIVITY, ENUM_INTERACTION_TYPE_READ_POST } = require('../types/interaction');
+const moment = require('moment');
+const {
+    ENUM_INTERACTION_TYPE_READ_ACTIVITY,
+    ENUM_INTERACTION_TYPE_READ_POST,
+    ENUM_INTERACTION_ACTION_READ,
+} = require('../types/interaction');
 const { ENUM_POST_STATUS_OPEN } = require('../types/post');
 
 async function increaseCountMongoose(id, name, inc) {
@@ -107,7 +112,7 @@ async function increaseInteractionReadCountMongoose(interaction) {
     }
     if (interaction.action?.length) {
         const action = interaction.action[0];
-        if (action?.__component === 'interaction.read') {
+        if (action?.__component === ENUM_INTERACTION_ACTION_READ) {
             await strapi.query('interaction.read').model.update({ _id: ObjectId(action.id) }, { $inc: { count: 1 } });
 
             if (interaction.type === ENUM_INTERACTION_TYPE_READ_ACTIVITY) {
@@ -126,7 +131,7 @@ async function increaseInteractionReadCountBookshelf(interaction) {
 
     if (interaction.action?.length) {
         const action = interaction.action[0];
-        if (action?.__component === 'interaction.read') {
+        if (action?.__component === ENUM_INTERACTION_ACTION_READ) {
             const knex = strapi.connections.default;
             const subquery = knex('interactions_components')
                 .where({
@@ -152,6 +157,56 @@ async function increaseSurveyScaleResultMongoose(componentId, count) {
 
 async function increaseSurveyScaleResultBookshelf(componentId, count) {
     return increaseCountBookself(componentId, 'components_survey_scale_results', 'count', count);
+}
+
+async function foundUnreadLatestMongoose(activityId, memberId) {
+    return Promise.resolve(null);
+}
+
+async function foundUnreadLatestBookshelf(activityId, memberId) {
+    const knex = strapi.connections.default;
+    const rows = await knex
+        .from('interactions')
+        .innerJoin('interactions_components', (t) => {
+            t.on('interactions.id', '=', 'interactions_components.interaction_id');
+        })
+        .innerJoin('components_interaction_reads', (t) => {
+            t.on('components_interaction_reads.id', '=', 'interactions_components.component_id');
+        })
+        .where('interactions.type', ENUM_INTERACTION_TYPE_READ_POST)
+        .andWhere('interactions.activity', activityId)
+        .andWhere('interactions.actor', memberId)
+        .andWhere('interactions_components.component_type', 'components_interaction_reads')
+        .andWhere('components_interaction_reads.count', '=', 0)
+        .orderBy('interactions.createdAt', 'desc')
+        .limit(1)
+        .select('interactions.createdAt');
+    return rows?.length ? moment(rows[0].createdAt).toISOString() : undefined;
+}
+
+async function foundReadLatestMongoose(activityId, memberId) {
+    return Promise.resolve(null);
+}
+
+async function foundReadLatestBookshelf(activityId, memberId) {
+    const knex = strapi.connections.default;
+    const rows = await knex
+        .from('interactions')
+        .innerJoin('interactions_components', (t) => {
+            t.on('interactions.id', '=', 'interactions_components.interaction_id');
+        })
+        .innerJoin('components_interaction_reads', (t) => {
+            t.on('components_interaction_reads.id', '=', 'interactions_components.component_id');
+        })
+        .where('interactions.type', ENUM_INTERACTION_TYPE_READ_POST)
+        .andWhere('interactions.activity', activityId)
+        .andWhere('interactions.actor', memberId)
+        .andWhere('interactions_components.component_type', 'components_interaction_reads')
+        .andWhere('components_interaction_reads.count', '>', 0)
+        .orderBy('interactions.updatedAt', 'desc')
+        .limit(1)
+        .select('interactions.updatedAt');
+    return rows?.length ? moment(rows[0].updatedAt).toISOString() : undefined;
 }
 
 async function insertManyFeedsMongoose(targets) {
@@ -224,6 +279,10 @@ module.exports = {
     increasePostReportCountBookshelf,
     increaseSurveyScaleResultMongoose,
     increaseSurveyScaleResultBookshelf,
+    foundUnreadLatestMongoose,
+    foundUnreadLatestBookshelf,
+    foundReadLatestMongoose,
+    foundReadLatestBookshelf,
     insertManyFeedsMongoose,
     insertManyFeedsBookshelf,
     existOtherParticipatedPost,

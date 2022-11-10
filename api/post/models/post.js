@@ -187,6 +187,11 @@ module.exports = {
                 if (useNotifyTypes.includes(result.type)) {
                     strapi.services.notification.onPostCreated(result);
                 }
+                if (result.type === ENUM_POST_TYPE_BOARD_ARTICLE) {
+                    strapi.services.post.createDefaultReadCount(result).catch((err) => {
+                        strapi.log.warn(`post.createDefaultReadCount failed: post.id = ${result.id}\n%j`, err);
+                    });
+                }
             } catch (error) {
                 strapi.log.warn(`publish.postCreated failed: post.id = ${result.id}\n%j`, error);
             }

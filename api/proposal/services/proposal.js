@@ -71,13 +71,33 @@ const {
 } = require('../../../src/types/CommonsBudgetType');
 const { ENUM_POST_TYPE_SURVEY_RESPONSE, ENUM_POST_STATUS_OPEN } = require('../../../src/types/post');
 const { ENUM_INTERACTION_TYPE_LIKE_PROPOSAL } = require('../../../src/types/interaction');
-const { getValueId } = require('../../../src/util/strapi_helper');
+const {
+    getValueId,
+    foundUnreadLatestMongoose,
+    foundUnreadLatestBookshelf,
+    foundReadLatestMongoose,
+    foundReadLatestBookshelf,
+    connectionIsMongoose,
+} = require('../../../src/util/strapi_helper');
 
 const NOTIFY_CHANGED_STATUS = [
     ENUM_PROPOSAL_STATUS_PENDING_VOTE,
     ENUM_PROPOSAL_STATUS_VOTE,
     ENUM_PROPOSAL_STATUS_CLOSED,
 ];
+
+let foundUnreadLatest;
+let foundReadLatest;
+
+function chooseModelFunction() {
+    if (connectionIsMongoose()) {
+        foundUnreadLatest = foundUnreadLatestMongoose;
+        foundReadLatest = foundReadLatestMongoose;
+    } else {
+        foundUnreadLatest = foundUnreadLatestBookshelf;
+        foundReadLatest = foundReadLatestBookshelf;
+    }
+}
 
 async function isProposalExists(id) {
     try {
@@ -1713,5 +1733,22 @@ module.exports = {
         const assessCount = await strapi.services.boaclient.getAssessCount(proposalId);
         const ballotCount = await strapi.services.boaclient.getBallotCount(proposalId);
         return { id: proposal.id, validatorCount, assessCount, ballotCount };
+    },
+    async noticeStatus(activityId, user) {
+        if (!foundReadLatest) {
+            chooseModelFunction();
+        }
+
+        const activity = await strapi.query('activity').findOne({ id: activityId }, []);
+        if (!activity) throw strapi.errors.notFound('notFound activity');
+        if (activity.type !== ENUM_ACTIVITY_TYPE_BOARD) throw strapi.errors.badRequest('invalid activity');
+
+        if (!user || !user.member) {
+            return { id: activity.id };
+        }
+        const memberId = getValueId(user.member);
+        const lastUnreadAt = await foundUnreadLatest(activity.id, memberId);
+        const lastUpdateAt = await foundReadLatest(activity.id, memberId);
+        return { id: activity.id, lastUpdateAt, lastUnreadAt };
     },
 };

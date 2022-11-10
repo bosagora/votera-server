@@ -53,7 +53,6 @@ module.exports = {
         postStatus(id: ID!): PostStatus
         activityPosts(id: ID!, type: String!, sort: String, limit: Int, start: Int): ActivityPostsPayload
         postComments(id: ID!, sort: String, limit: Int, start: Int): PostCommentsPayload
-        listPosts(sort: String, limit: Int, start: Int, where: JSON): [Post]
     `,
     mutation: `
         readArticle(id: ID!): ReadArticlePayload
@@ -74,10 +73,6 @@ module.exports = {
             postComments: {
                 description: 'Query Child Posts of Post',
                 resolver: 'application::post.post.postComments',
-            },
-            listPosts: {
-                description: 'List up Post (comment)',
-                resolver: 'application::post.post.listPosts',
             },
         },
         Mutation: {
