@@ -14,9 +14,9 @@ module.exports = {
             NEW_OPINION_LIKE
         }
         type Notification {
-            id: String
-            target: String
-            type: ENUM_NOTIFICATION_TYPE
+            id: String!
+            target: String!
+            type: ENUM_NOTIFICATION_TYPE!
         }
         enum ENUM_PROPOSAL_TYPE {
             SYSTEM
@@ -50,10 +50,10 @@ module.exports = {
         }          
         type SubPost {
             id: ID!
-            type: ENUM_POST_TYPE
-            activity: ID
+            type: ENUM_POST_TYPE!
+            activity: ID!
             parentPost: ID
-            writer: ID
+            writer: ID!
         }
     `,
     query: `
@@ -86,7 +86,7 @@ module.exports = {
                         return strapi.services.pubsub.asyncIterator('proposalCreated');
                     },
                     (payload, variables) => {
-                        return payload.proposalCreated.creator !== variables.memberId;
+                        return payload.proposalCreated.creator.toString() !== variables.memberId;
                     },
                 ),
             },
@@ -107,8 +107,8 @@ module.exports = {
                     },
                     (payload, variables) => {
                         return (
-                            payload.postCreated.activity === variables.activityId &&
-                            payload.postCreated.writer !== variables.memberId
+                            payload.postCreated.activity.toString() === variables.activityId &&
+                            payload.postCreated.writer.toString() !== variables.memberId
                         );
                     },
                 ),
