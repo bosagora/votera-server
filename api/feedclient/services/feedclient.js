@@ -175,6 +175,15 @@ function makeFeedsProposal(proposal, type) {
     };
 }
 
+function makeFeedsProposalComment(proposal, activityId, type) {
+    return {
+        type,
+        content: { proposalTitle: proposal.name, proposalType: proposal.type },
+        navigation: { proposalId: proposal.proposalId, activityId },
+        isRead: false,
+    };
+}
+
 /*
 function makePayloadProposal(proposal, type) {
     let en_title, en_body, ko_title, ko_body;
@@ -405,6 +414,27 @@ async function processComment(postId, activityId, proposalId, memberName, type) 
     // sendNotification(userFeeds, payloads.payload_ko, payloads.payload_en);
 }
 
+async function processProcessComment(proposal, activityId, type) {
+    const feed = makeFeedsProposalComment(proposal, activityId, type);
+    if (!feed) {
+        return;
+    }
+    // const payloads = makePayloadProposal(proposal, type);
+    // if (!payloads) {
+    //     return;
+    // }
+
+    let userList = await selectLikeProposalsNews(proposal.id);
+    while (userList) {
+        if (userList.userFeeds) {
+            await saveFeeds(userList.userFeeds, feed);
+            // sendNotification(userList.userFeeds, payloads.payload_ko, payloads.payload_en);
+        }
+
+        userList = await selectLikeProposalsNews(proposal.id, userList.lastFollow);
+    }
+}
+
 module.exports = {
     async onProposalCreated(proposal) {
         strapi.log.debug(`feedclient.onProposalCreated proposal.id = ${proposal.id}`);
@@ -488,7 +518,7 @@ module.exports = {
                 type,
             );
         } else if (type === ENUM_FEEDS_TYPE_NEW_PROPOSAL_NOTICE) {
-            await processProposal(proposal, type, false, true);
+            await processProcessComment(proposal, getValueId(post.activity), type);
         }
     },
     async onInteractionCreated(interaction) {
