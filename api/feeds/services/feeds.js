@@ -9,7 +9,7 @@ module.exports = {
         return { notReadCount, count, values };
     },
     async feedsStatus(user) {
-        const notReadCount = await strapi.query('feeds').count({ target: user.id, isRead: false  });
+        const notReadCount = await strapi.query('feeds').count({ target: user.id, isRead: false });
         return { notReadCount };
     },
     async batchJob() {

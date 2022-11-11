@@ -73,7 +73,7 @@ module.exports = {
             listenFeed: {
                 subscribe: withFilter(
                     () => {
-                        return strapi.services.pubsub.asyncIterator('feed');
+                        return strapi.services.pubsub.asyncIterator('listenFeed');
                     },
                     (payload, variables) => {
                         return payload.listenFeed.target === variables.target;

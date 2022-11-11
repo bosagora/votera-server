@@ -70,6 +70,9 @@ module.exports = {
         }
         return sanitizePost(post);
     },
+    async delete(ctx) {
+        return ctx.forbidden();
+    },
     async postStatus(ctx) {
         const { id } = ctx.params;
         if (!id) return ctx.badRequest('missing parameter');
