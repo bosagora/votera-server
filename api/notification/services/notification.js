@@ -24,12 +24,14 @@ module.exports = {
         strapi.log.debug('notification.onProposalTimeAlarm proposal.id = ', proposal.id);
         strapi
             .query('proposal')
-            .update({ id: proposal.id }, { timeAlarm_notified: true })
+            .update({ id: proposal.id, timeAlarm_notified: false }, { timeAlarm_notified: true })
             .then(() => {
                 return strapi.services.feedclient.onProposalTimeAlarm(proposal);
             })
             .catch((err) => {
-                strapi.log.warn(`notification.onProposalTimeAlarm failed: proposal.id = ${proposal.id}\n%j`, err);
+                if (err.message !== 'entry.notFound') {
+                    strapi.log.warn(`notification.onProposalTimeAlarm failed: proposal.id = ${proposal.id}\n%j`, err);
+                }
             });
     },
     onPostCreated(post) {

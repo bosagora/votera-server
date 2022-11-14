@@ -11,8 +11,8 @@
  */
 
 module.exports = {
-    '*/10 * * * * *': async () => {
-        // every 10 minutes
+    '* * * * *': async () => {
+        // every minutes
         await strapi.services.cronjob.tryLock('lock:batch:transaction', async () => {
             await strapi.services.transaction.batchJob();
         });
@@ -26,13 +26,17 @@ module.exports = {
     '0 * * * *': async () => {
         // every hour
         await strapi.services.cronjob.tryLock('lock:batch:proposalAssess', async () => {
+            strapi.log.info('batch:proposalAssess locked');
             await strapi.services.proposal.batchJobForAssess();
+            strapi.log.info('batch:proposalAssess unlocked');
         });
     },
     '1 * * * *': async () => {
         // every hour at 1 minute (because of openTime in vote)
         await strapi.services.cronjob.tryLock('lock:batch:proposalVote', async () => {
+            strapi.log.info('batch:proposalVote locked');
             await strapi.services.proposal.batchJobForVote();
+            strapi.log.info('batch:proposalVote unlocked');
         });
     },
 };
