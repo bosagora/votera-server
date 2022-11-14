@@ -199,7 +199,12 @@ module.exports = {
                     isReported = true;
                     break;
                 case ENUM_INTERACTION_TYPE_READ_POST:
-                    isRead = true;
+                    if (found.action?.length > 0) {
+                        const action = found.action[0];
+                        if (action?.__component === ENUM_INTERACTION_ACTION_READ && action.count > 0) {
+                            isRead = true;
+                        }
+                    }
                     break;
             }
         }
