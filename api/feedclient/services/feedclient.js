@@ -179,7 +179,7 @@ function makeFeedsProposalComment(proposal, activityId, type) {
     return {
         type,
         content: { proposalTitle: proposal.name, proposalType: proposal.type },
-        navigation: { proposalId: proposal.proposalId, activityId },
+        navigation: { proposalId: proposal.proposalId, activityId: activityId.toString() },
         isRead: false,
     };
 }
@@ -263,7 +263,7 @@ function makeFeedsComment(postId, activityId, proposalId, memberName, type) {
     return {
         type,
         content: { userName: memberName },
-        navigation: { postId, activityId, proposalId },
+        navigation: { postId: postId.toString(), activityId: activityId.toString(), proposalId },
         isRead: false,
     };
 }
