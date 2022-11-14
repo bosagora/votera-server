@@ -20,6 +20,9 @@ module.exports = {
             if (data.likeCount === undefined) {
                 data.likeCount = 0;
             }
+            if (data.timeAlarm_notified === undefined) {
+                data.timeAlarm_notified = false;
+            }
         },
         async afterCreate(result, data) {
             try {
