@@ -58,7 +58,7 @@
     },
     {
       "method": "GET",
-      "path": "/proposalInfo/:_proposalId",
+      "path": "/proposalInfo/:_proposalHash",
       "handler": "proposal.findInfo",
       "config": {
         "policies": []
