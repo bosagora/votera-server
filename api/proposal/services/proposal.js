@@ -101,13 +101,23 @@ function chooseModelFunction() {
 
 async function isProposalExists(id) {
     try {
-        const found = await strapi.services.proposal.findOne({ proposalId: id });
+        const found = await strapi.query('proposal').findOne({ proposalId: id });
         if (found !== null) {
             return true;
         }
         return await strapi.services.boaclient.isCommonsBudgetProposalExist(id);
     } catch (err) {
         strapi.log.warn(`idExists failed: proposalId=${id}\n%j`, err);
+        throw convertQueryOperationError(err);
+    }
+}
+
+async function isHashExists(hash) {
+    try {
+        const found = await strapi.query('proposal').findOne({ doc_hash: hash });
+        return found !== null;
+    } catch (err) {
+        strapi.log.warn(`hashExists failed: hash=${hash}\n%j`, err);
         throw convertQueryOperationError(err);
     }
 }
@@ -183,8 +193,8 @@ async function getUploadFileInfo(id) {
     }
 }
 
-async function getUploadFilesInfo(ids) {
-    const infos = await Promise.all(ids.map(async (id) => getUploadFileInfo(id)));
+async function getUploadFilesInfo(attachments) {
+    const infos = await Promise.all(attachments.map(async (attachment) => getUploadFileInfo(getValueId(attachment))));
     return infos;
 }
 
@@ -196,7 +206,7 @@ async function getProposalInfo(proposal) {
         type:
             proposal.type === ENUM_PROPOSAL_TYPE_BUSINESS ? ENUM_PROPOSALINFO_TYPE_FUND : ENUM_PROPOSALINFO_TYPE_SYSTEM,
         fundingAmount: proposal.fundingAmount,
-        logo: proposal.logo?.id ? await getUploadFileInfo(proposal.logo.id) : {},
+        logo: proposal.logo ? await getUploadFileInfo(getValueId(proposal.logo)) : {},
         attachment: proposal.attachment ? await getUploadFilesInfo(proposal.attachment) : [],
         vote_start: proposal.vote_start,
         vote_end: proposal.vote_end,
@@ -210,7 +220,7 @@ async function getProposalDocHash(proposal) {
 }
 
 function getProposalInfoUrl(proposal) {
-    return `${strapi.config.votera.proposalInfoHost}/proposalInfo/${proposal.proposalId}`;
+    return `${strapi.config.votera.proposalInfoHost}/proposalInfo/${proposal.doc_hash}`;
 }
 
 async function createAdminMemberRole(activity, proposal) {
@@ -990,13 +1000,7 @@ module.exports = {
                 proposal.proposal_fee = null;
             }
 
-            let uId;
-            do {
-                uId = `0x${crypto.randomBytes(32).toString('hex')}`;
-            } while (await isProposalExists(uId));
-
             // initialize proposal other parameter
-            proposal.proposalId = uId;
             proposal.status = ENUM_PROPOSAL_STATUS_CREATED;
             proposal.validators = null;
             proposal.signature = null;
@@ -1012,7 +1016,23 @@ module.exports = {
             proposal.assessStart = assessStart;
             proposal.assessEnd = assessEnd;
             proposal.proposal_begin = await strapi.services.boaclient.getCurrentBlockHeight();
-            proposal.doc_hash = await getProposalDocHash(proposal);
+
+            for (;;) {
+                const uId = `0x${crypto.randomBytes(32).toString('hex')}`;
+                const uIdExists = await isProposalExists(uId);
+                if (uIdExists) {
+                    continue;
+                }
+                proposal.proposalId = uId;
+
+                const hash = await getProposalDocHash(proposal);
+                const hashExists = await isHashExists(hash);
+                if (hashExists) {
+                    continue;
+                }
+                proposal.doc_hash = hash;
+                break;
+            }
 
             const createdNotice = await createNotice(proposal);
             const createdDiscussion = await createDiscussion(proposal);
@@ -1496,8 +1516,8 @@ module.exports = {
             throw convertQueryOperationError(error);
         }
     },
-    async findInfo(proposalId) {
-        const proposal = await strapi.query('proposal').findOne({ proposalId });
+    async findInfo(proposalHash) {
+        let proposal = await strapi.query('proposal').findOne({ doc_hash: proposalHash });
         if (!proposal) return null;
         const proposalInfo = await getProposalInfo(proposal);
         return proposalInfo;

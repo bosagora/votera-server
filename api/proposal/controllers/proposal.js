@@ -39,9 +39,9 @@ module.exports = {
         return sanitizeEntity(proposal, { model: strapi.models.proposal });
     },
     async findInfo(ctx) {
-        const { _proposalId } = ctx.params;
-        if (!_proposalId) return ctx.badRequest('missing parameter');
-        const proposalMeta = await strapi.services.proposal.findInfo(_proposalId);
+        const { _proposalHash } = ctx.params;
+        if (!_proposalHash) return ctx.badRequest('missing parameter');
+        const proposalMeta = await strapi.services.proposal.findInfo(_proposalHash);
         if (!proposalMeta) return ctx.notFound('not found');
         return proposalMeta;
     },
