@@ -194,7 +194,8 @@ async function getUploadFileInfo(id) {
 }
 
 async function getUploadFilesInfo(attachments) {
-    const infos = await Promise.all(attachments.map(async (attachment) => getUploadFileInfo(getValueId(attachment))));
+    const ids = attachments.map((attachment) => getValueId(attachment)).sort();
+    const infos = await Promise.all(ids.map(async (id) => getUploadFileInfo(id)));
     return infos;
 }
 
