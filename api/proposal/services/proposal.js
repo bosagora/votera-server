@@ -42,6 +42,7 @@ const {
     ENUM_VOTE_PROPOSAL_STATE_RUNNING,
     ENUM_VOTE_PROPOSAL_STATE_NONE,
     ENUM_VOTE_PROPOSAL_STATE_WITHDRAWN,
+    ENUM_VOTE_PROPOSAL_STATE_NOTALLOWED,
     needCreateNotification,
 } = require('../../../src/types/proposal');
 const {
@@ -942,15 +943,15 @@ async function processProposalStatusVote(id) {
                     nonces,
                 );
 
-                strapi.log.info(`waitForTransaction.revealBallot proposal.id=${id}`);
-                await waitForTransaction(transInfo, proposal);
-
                 for (let j = 0; j < validators.length; j += 1) {
                     const address = validators[j].toLowerCase();
                     const choice = choices[j];
 
                     await strapi.query('validator').update({ address, proposal: proposal.id }, { choice });
                 }
+
+                strapi.log.info(`waitForTransaction.revealBallot proposal.id=${id}`);
+                await waitForTransaction(transInfo, proposal);
             }
 
             if (revealBallots.notFound) {
@@ -1702,9 +1703,13 @@ module.exports = {
                         : ENUM_VOTE_PROPOSAL_STATE_NONE;
                 break;
             case ENUM_BUDGET_RESULT_APPROVED:
-                voteProposalState = proposalData.fundWithdrawn
-                    ? ENUM_VOTE_PROPOSAL_STATE_WITHDRAWN
-                    : ENUM_VOTE_PROPOSAL_STATE_APPROVED;
+                if (proposalData.fundWithdrawn) {
+                    voteProposalState = ENUM_VOTE_PROPOSAL_STATE_WITHDRAWN;
+                } else if (!proposalData.fundingAllowed) {
+                    voteProposalState = ENUM_VOTE_PROPOSAL_STATE_NOTALLOWED;
+                } else {
+                    voteProposalState = ENUM_VOTE_PROPOSAL_STATE_APPROVED;
+                }
                 break;
             case ENUM_BUDGET_RESULT_REJECTED:
                 voteProposalState = ENUM_VOTE_PROPOSAL_STATE_REJECTED;

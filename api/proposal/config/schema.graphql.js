@@ -96,6 +96,7 @@ module.exports = {
             RUNNING
             APPROVED
             WITHDRAWN
+            NOTALLOWED
             REJECTED
             INVALID_QUORUM
             ASSESSMENT_FAILED
