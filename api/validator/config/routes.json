@@ -47,6 +47,14 @@
       "config": {
         "policies": []
       }
+    },
+    {
+      "method": "GET",
+      "path": "/export/validator/:_proposalId",
+      "handler": "validator.export",
+      "config": {
+        "policies": []
+      }
     }
   ]
 }

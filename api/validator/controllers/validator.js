@@ -29,4 +29,15 @@ module.exports = {
         const entities = await strapi.services.validator.listBallotValidators(_proposalId, _limit ?? 100, _start ?? 0);
         return entities.map((entity) => sanitizeEntity(entity, { model: strapi.models.validator }));
     },
+    async export(ctx) {
+        const { _proposalId } = ctx.params;
+        if (!_proposalId) return ctx.badRequest('missing parameter');
+        const proposal = await strapi.query('proposal').findOne({ proposalId: _proposalId }, []);
+        if (!proposal) return ctx.notFound('not found proposal');
+
+        const csv = await strapi.services.validator.export(proposal);
+        ctx.set('Content-disposition', `attachment; filename=${strapi.services.validator.exportName(proposal)}`);
+        ctx.set('Content-type', 'text/csv; charset=utf-8');
+        return csv;
+    },
 };

@@ -1,8 +1,15 @@
 'use strict';
 
 const axios = require('axios').default;
+const moment = require('moment');
 const { recoverTypedSignature } = require('../../../src/sign-typed-data');
-const { ENUM_PROPOSAL_TYPE_BUSINESS } = require('../../../src/types/proposal');
+const {
+    ENUM_PROPOSAL_TYPE_BUSINESS,
+    ENUM_PROPOSAL_STATUS_PENDING_ASSESS,
+    ENUM_PROPOSAL_STATUS_ASSESS,
+    ENUM_PROPOSAL_STATUS_PENDING_VOTE,
+    ENUM_PROPOSAL_STATUS_VOTE,
+} = require('../../../src/types/proposal');
 const { DOMAIN_NAME_SIGNIN, DOMAIN_NAME_SIGNUP } = require('../../../src/types/validator');
 const { connectionIsMongoose } = require('../../../src/util/strapi_helper');
 
@@ -56,6 +63,12 @@ async function addBulkValidator(validators, id) {
             })),
         );
     }
+}
+
+function csvLine(value) {
+    return `${value.publicKey},${value.address},${value.assessUpdate?.toString() || ''},${
+        value.ballotUpdate?.toString() || ''
+    },${value.choice?.toString() || ''}\n`;
 }
 
 module.exports = {
@@ -161,7 +174,7 @@ module.exports = {
         return recover.toLowerCase() === address.toLowerCase() ? isValidSignTime(signTime) : false;
     },
     async listAssessValidators(proposalId, _limit, _start) {
-        const proposal = await strapi.query('proposal').findOne({ proposalId });
+        const proposal = await strapi.query('proposal').findOne({ proposalId }, []);
         if (!proposal) throw strapi.errors.notFound('not found proposal');
         const founds = await strapi
             .query('validator')
@@ -193,7 +206,7 @@ module.exports = {
         }
     },
     async listBallotValidators(proposalId, _limit, _start) {
-        const proposal = await strapi.query('proposal').findOne({ proposalId });
+        const proposal = await strapi.query('proposal').findOne({ proposalId }, []);
         if (!proposal) throw strapi.errors.notFound('not found proposal');
         const founds = await strapi
             .query('validator')
@@ -337,5 +350,34 @@ module.exports = {
                 }
             }
         }
+    },
+    exportName(proposal) {
+        switch (proposal.status) {
+            case ENUM_PROPOSAL_STATUS_PENDING_ASSESS:
+            case ENUM_PROPOSAL_STATUS_ASSESS:
+            case ENUM_PROPOSAL_STATUS_PENDING_VOTE:
+            case ENUM_PROPOSAL_STATUS_VOTE:
+                return `${proposal.proposalId}_${moment().format('YYYYMMDD')}.csv`;
+            default:
+                return `${proposal.proposalId}.csv`;
+        }
+    },
+    async export(proposal) {
+        const response = [Buffer.from('publicKey,address,assessUpdate,ballotUpdate,choice\n', 'utf-8')];
+        const _limit = 1000;
+        let _start = 0;
+        for (;;) {
+            const founds = await strapi
+                .query('validator')
+                .find({ proposal: proposal.id, _limit, _start, _sort: 'id' }, []);
+            for (let i = 0; i < founds.length; i += 1) {
+                response.push(Buffer.from(csvLine(founds[i]), 'utf-8'));
+            }
+            if (founds.length < _limit) {
+                break;
+            }
+            _start += _limit;
+        }
+        return Buffer.concat(response);
     },
 };
