@@ -131,7 +131,7 @@ config location: config/votera.js
 
 Votera service configuration
 
-- proposalInfoHost : proposal information url host
+- proposalInfoUrl : proposal information url
 - services
   - assess_begin_offset : assess begin offset in seconds (from GMT+9)
   - assess_end_offset : assess end date offset in seconds (from GMT+9)
