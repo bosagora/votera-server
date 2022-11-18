@@ -1,5 +1,5 @@
 module.exports = ({ env }) => ({
-    proposalInfoHost: env('PROPOSAL_INFO_HOST'),
+    proposalInfoUrl: env('PROPOSAL_INFO_URL'),
     services: {
         assess_begin_offset: env.int('ASSESS_BEGIN_OFFSET', 0),
         assess_end_offset: env.int('ASSESS_END_OFFSET', 86400),

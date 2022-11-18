@@ -222,7 +222,7 @@ async function getProposalDocHash(proposal) {
 }
 
 function getProposalInfoUrl(proposal) {
-    return `${strapi.config.votera.proposalInfoHost}/proposalInfo/${proposal.doc_hash}`;
+    return `${strapi.config.votera.proposalInfoUrl}/${proposal.doc_hash}`;
 }
 
 async function createAdminMemberRole(activity, proposal) {
