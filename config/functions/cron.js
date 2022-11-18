@@ -39,4 +39,12 @@ module.exports = {
             strapi.log.info('batch:proposalVote unlocked');
         });
     },
+    '0 1 * * 1': async () => {
+        // every monday am 1:00
+        await strapi.services.cronjob.tryLock('lock:batch:weekly', async () => {
+            strapi.log.info('batch:weekly locked');
+            await strapi.services.feeds.batchJob();
+            strapi.log.info('batch.weekly unlocked');
+        });
+    },
 };

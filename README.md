@@ -1,5 +1,4 @@
-# votera-server
-Votera Server
+# Votera Server
 
 ## installation
 
@@ -80,6 +79,10 @@ config location:  config/server.js
       - username : username for redis connection
       - password : password for redis connection
   - ttl: ttl (time to live) configuration of redlock
+  - feedExpireDays: expires feeds after this days
+- admin: server admin setting
+  - auth:
+    - secret: admin page JWT secret key
 
 ### s3 (upload configuration)
 
@@ -140,39 +143,42 @@ Votera service configuration
   - reportMinCount : minimum count for report
   - reportPercent : percent of member for report
 
-# Votera Strapi Configuration
+## Votera Strapi Configuration
+
 Votera Server (Using strapi server)
 
-## Method for Authenticated permission
+### Method for Authenticated permission
 
 |Plugin|Name|Method|
 |------|----|------|
 |Application|Agora|find|
-|Application|Ballot|submitBallot,recordBallot,listMyBallots|
+|Application|Ballot|listMyBallots,recordBallot,submitBallot|
 |Application|Feeds|count, feedsStatus, find, findone, listFeeds, update|
 |Application|Member|all|
 |Application|Post|all|
 |Application|Proposal|all|
 |Application|Transaction|updateReceipt|
-|Application|Validator|count,find,findone,getsignindomain,getsignupdomain,isvalidator,listAssessValidators,listBallotValidators|
+|Application|Validator|all|
 |Application|Version|find|
 |Upload|Upload|upload|
 |Users-Permissions|User|me, updateuseralarmstatus, updateuserpushtoken|
 
 ### method for Public permission
+
 |Plugin|Name|Method|
 |------|----|------|
 |Application|Agora|find|
-|Application|Member|checkdupusername, count, find, findone, ismember, signinmember, signupmember|
+|Application|Member|all|
 |Application|Post|all|
 |Application|Proposal|all|
 |Application|Transaction|updateReceipt|
-|Application|Validator|count, find, findone, getsignindomain,getsignupdomain,isvalidator,listAssessValidators, listBallotValidators|
+|Application|Validator|all|
 |Application|Version|find|
 |Users-Permissions|Auth|callback, connect, emailconfirmation, forgotpassword, register, resetpassword|
 |Users-Permissions|User|me|
 
-### Agora 
+### Agora
+
 |Field|Description|
 |-----|-----------|
 |PrivacyTermUrl|url for privacy policy|
@@ -184,6 +190,7 @@ Votera Server (Using strapi server)
 |ProviderUrl|address of blockchain provider|
 
 ### .env variable
+
 |Name|Description|Default|
 |----|-----------|-------|
 |HOST|binding 할 서버 주소|0.0.0.0|
@@ -240,138 +247,181 @@ Votera Server (Using strapi server)
 
 ## Installation
 
-0. package update
+1. package update
 
-$ sudo apt update
-$ sudo apt upgrade
+    ```sh
+    sudo apt update
+    sudo apt upgrade
+    ```
 
-1. nvm install
+2. nvm install
 
-$ curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-$ wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+    ```sh
+    curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+    ```
 
-2. install node
+    or
 
-$ nvm install lts/fermium
+    ```sh
+    wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+    ```
 
-3. update npm
+3. install node
 
-$ npm install -g npm
-$ npm install -g corepack
+    ```sh
+    nvm install lts/fermium
+    ```
 
-4. install nginx
+4. update npm
 
-$ sudo apt install nginx
+    ```sh
+    npm install -g npm
+    npm install -g corepack
+    ```
 
-5. download votera-server
+5. install nginx
 
-$ cd ~
-$ mkdir votera
-$ cd votera
-$ git clone https://github.com/bosagora/votera-server.git
+    ```sh
+    sudo apt install nginx
+    ```
 
-6. build votera-server
+6. download votera-server
 
-$ cd ~/votera/votera-server
-$ yarn install
-$ yarn build
+    ```sh
+    cd ~
+    mkdir votera
+    cd votera
+    git clone https://github.com/bosagora/votera-server.git
+    ```
 
-아래부터는 다음 참조
-https://docs-v3.strapi.io/developer-docs/latest/setup-deployment-guides/deployment/hosting-guides/amazon-aws.html
+7. build votera-server
 
-7. install pm2
+    ```sh
+    cd ~/votera/votera-server
+    yarn install
+    yarn build
+    ```
 
-$ cd ~
-$ npm install -g pm2
+    아래부터는 다음 참조
 
-8. start pm2
+    [AWS Deployment - Strapi Developer Documentation](https://docs-v3.strapi.io/developer-docs/latest/setup-deployment-guides/deployment/hosting-guides/amazon-aws.html)
 
-$ cd
-$ pm2 init
-$ vi ecosystem.config.js
+8. install pm2
 
-9. edit ecosystem.config.js
+    ```sh
+    cd ~
+    npm install -g pm2
+    ```
 
-다음과 같은 사항이면 된다.
+9. start pm2
 
-module.exports = {
-  apps : [{
-    name: 'votera-server',
-    cwd: '/home/ubuntu/votera/votera-server',
-    script: 'yarn',
-    args: 'start',
-    env: {
-      PUBSUB_ENABLE: 'true',
-      BOSAGORA_CHAINID: {BOSAGORA_CHAINID},
-      BOSAGORA_PROVIDER_URL: {BOSAGORA_PROVIDER_URL},
-      BOSAGORA_QUERY_URL: {BOSAGORA_QUERY_URL},
-      WALLET_VOTE_KEY: {WALLET_VOTE_KEY},
-      COMMONS_BUDGET_ADDRESS: {COMMONS_BUDGET_ADDRESS},
-      VOTERA_VOTE_ADDRESS: {VOTERA_VOTE_ADDRESS},
-      HMAC_KEY: {HMAC_KEY},
-      DATABASE_NAME: 'votera',
-      DATABASE_USERNAME: {DATABASE_USERNAME},
-      DATABASE_PASSWORD: {DATABASE_PASSWORD},
-      PROPOSAL_INFO_HOST: {PROPOSAL_INFO_HOST},
-    },
-  }],
-};
+    ```sh
+    cd ~
+    pm2 init
+    vi ecosystem.config.js
+    ```
 
-10. start pm2
+10. edit ecosystem.config.js
 
-$ cd ~
-$ pm2 start ecosystem.config.js
+    다음과 같은 사항이면 된다.
 
-11. register system startup script
+    ```javascript
+    module.exports = {
+      apps : [{
+        name: 'votera-server',
+        cwd: '/home/ubuntu/votera/votera-server',
+        script: 'yarn',
+        args: 'start',
+        env: {
+          PUBSUB_ENABLE: 'true',
+          BOSAGORA_CHAINID: {BOSAGORA_CHAINID},
+          BOSAGORA_PROVIDER_URL: {BOSAGORA_PROVIDER_URL},
+          BOSAGORA_QUERY_URL: {BOSAGORA_QUERY_URL},
+          WALLET_VOTE_KEY: {WALLET_VOTE_KEY},
+          COMMONS_BUDGET_ADDRESS: {COMMONS_BUDGET_ADDRESS},
+          VOTERA_VOTE_ADDRESS: {VOTERA_VOTE_ADDRESS},
+          HMAC_KEY: {HMAC_KEY},
+          DATABASE_NAME: 'votera',
+          DATABASE_USERNAME: {DATABASE_USERNAME},
+          DATABASE_PASSWORD: {DATABASE_PASSWORD},
+          PROPOSAL_INFO_HOST: {PROPOSAL_INFO_HOST},
+        },
+      }],
+    };
+    ```
 
-$ cd ~
-$ pm2 startup systemd
+11. start pm2
 
-copy/paste the generated command:
+    ```sh
+    cd ~
+    pm2 start ecosystem.config.js
+    ```
 
-$ sudo env PATH=$PATH:/home/centos/.nvm/versions/node/v14.20.1/bin /home/centos/.nvm/versions/node/v14.20.1/lib/node_modules/pm2/bin/pm2 startup systemd -u centos --hp /home/centos
+12. register system startup script
 
-save the pm2 process list and enviornment
+    ```sh
+    cd ~
+    pm2 startup systemd
+    ```
 
-$ pm2 save
+    copy/paste the generated command:
+
+    ```sh
+    sudo env PATH=$PATH:/home/centos/.nvm/versions/node/v14.20.1/bin /home/centos/.nvm/versions/node/v14.20.1/lib/node_modules/pm2/bin/pm2 startup systemd -u centos --hp /home/centos
+    ```
+
+13. save the pm2 process list and enviornment
+
+    ```sh
+    pm2 save
+    ```
 
 nginx 설정은 다음과 같이 한다. 
 만약 이 nginx 가 외부에 direct 접근이 되는 서버라고 하면 443 으로 SSL 설정을 하고
 만약 그렇지 않고 내부에서만 접근하는 서버라고 하면 8080 으로 해도 됨
 
-
 ## S3 Configuration
 
 Block public access (bucket settings)
 uncheck Block all public access
-  - uncheck Block public access to buckets and objects granted through new access control lists (ACLs)
-  - uncheck Blick public access to buckets and objects granted through any access control lists (ACLs)
-  - check Block public access to buckets and objects granted through new public bucket or access point policies
-  - check Block public and cross-account access to buckets and objects through any public bucket or access point policies
+
+- uncheck Block public access to buckets and objects granted through new access control lists (ACLs)
+- uncheck Blick public access to buckets and objects granted through any access control lists (ACLs)
+- check Block public access to buckets and objects granted through new public bucket or access point policies
+- check Block public and cross-account access to buckets and objects through any public bucket or access point policies
 
 Edit Object Ownership
 
 select ACLs enabled
 select Bucket owner preferred
 
-
 ### Redis Configuration
 
-    $ sudo apt update
-    $ sudo apt upgrade
-    $ sudo apt install redis-server
+```sh
+sudo apt update
+sudo apt upgrade
+sudo apt install redis-server
+```
 
 Edit Redis configuration
 
-    $ sudo vi /etc/redis/redis.conf
+```sh
+sudo vi /etc/redis/redis.conf
+```
 
-    requirepass
-    bind
-    port
-    maxmemory
-    maxmemory-policy   allkeys-lru
+edit following configuration
 
-Restart and register to auto start 
+```text
+requirepass
+bind
+port
+maxmemory
+maxmemory-policy   allkeys-lru
+```
 
-    $ sudo systemctl restart redis-server
-    $ sudo systemctl enable redis-server
+Restart and register to auto start
+
+```sh
+sudo systemctl restart redis-server
+sudo systemctl enable redis-server
+```

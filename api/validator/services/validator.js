@@ -247,7 +247,7 @@ module.exports = {
         if (assessCount === dbCount) {
             return;
         } else if (assessCount < dbCount) {
-            // DB에 더 많은 항목이 투표했다고 표시됨
+            // DB에 더 많은 항목이 투표했다고 기록된 경우
             const extras = [];
             const limit = 100;
             for (let start = 0; ; start += limit) {
@@ -273,7 +273,7 @@ module.exports = {
                 await strapi.query('validator').update({ id: extras[i] }, { hasAssess: false, assessUpdate: null });
             }
         } else {
-            // Blockchain에 더 많은 항목이 들어가 있음
+            // Blockchain에 더 많은 항목이 들어가 있는 경우
             const blockHeight = await strapi.services.boaclient.getCurrentBlockHeight();
             const blockTimestamp = await strapi.services.boaclient.getBlockTimestamp(blockHeight);
             for (let i = 0; i < assessCount; i += 1) {
@@ -357,13 +357,18 @@ module.exports = {
             case ENUM_PROPOSAL_STATUS_ASSESS:
             case ENUM_PROPOSAL_STATUS_PENDING_VOTE:
             case ENUM_PROPOSAL_STATUS_VOTE:
-                return `${proposal.proposalId}_${moment().format('YYYYMMDD')}.csv`;
+                return `${proposal.proposalId || ''}_${moment().format('YYYYMMDD')}.csv`;
             default:
-                return `${proposal.proposalId}.csv`;
+                return `${proposal.proposalId || ''}.csv`;
         }
     },
     async export(proposal) {
-        const response = [Buffer.from('publicKey,address,assessUpdate,ballotUpdate,choice\n', 'utf-8')];
+        const response = [
+            Buffer.from(
+                'VoterKey,ValidatorAddress,AssessUpdate(unix epoch time),BallotUpdate(unix epoch time),Ballot(0=Blank 1=YES 2=NO)\n',
+                'utf-8',
+            ),
+        ];
         const _limit = 1000;
         let _start = 0;
         for (;;) {

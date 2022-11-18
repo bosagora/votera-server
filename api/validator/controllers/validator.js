@@ -29,6 +29,15 @@ module.exports = {
         const entities = await strapi.services.validator.listBallotValidators(_proposalId, _limit ?? 100, _start ?? 0);
         return entities.map((entity) => sanitizeEntity(entity, { model: strapi.models.validator }));
     },
+    async create(ctx) {
+        return ctx.forbidden();
+    },
+    async delete(ctx) {
+        return ctx.forbidden();
+    },
+    async update(ctx) {
+        return ctx.forbidden();
+    },
     async export(ctx) {
         const { _proposalId } = ctx.params;
         if (!_proposalId) return ctx.badRequest('missing parameter');

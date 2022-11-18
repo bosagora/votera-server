@@ -72,17 +72,6 @@ module.exports = {
         return sanitizeEntity(entity, { model: strapi.models.member });
     },
     /**
-     * Count records.
-     *
-     * @return {Number}
-     */
-    count(ctx) {
-        if (_.has(ctx.query, '_q')) {
-            return strapi.services.member.countSearch(ctx.query);
-        }
-        return strapi.services.member.count(ctx.query);
-    },
-    /**
      * Update a record.
      *
      * @return {Object}
@@ -129,5 +118,8 @@ module.exports = {
         const { _address } = ctx.query;
         const member = await strapi.services.member.findOne({ address: _address });
         return member ? true : false;
+    },
+    async create(ctx) {
+        return ctx.forbidden();
     },
 };
