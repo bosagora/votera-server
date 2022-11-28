@@ -3713,9 +3713,10 @@ bl@^4.0.3, bl@^4.1.0:
     inherits "^2.0.4"
     readable-stream "^3.4.0"
 
-"blakejs@https://github.com/jkkang-kosac/blakejs.git":
+blakejs@^1.2.1:
   version "1.2.1"
-  resolved "https://github.com/jkkang-kosac/blakejs.git#cec21ffb14c7695927e0a4820e98c67aadd7ecab"
+  resolved "https://registry.yarnpkg.com/blakejs/-/blakejs-1.2.1.tgz#5057e4206eadb4a97f7c0b6e197a505042fc3814"
+  integrity sha512-QXUSXI3QVc/gJME0dBpXrag1kbzOqCjCX8/b54ntNyW6sjtoqxqRk3LTmXzaJoh71zMsDCjM+47jS7XiwN/+fQ==
 
 block-stream@*:
   version "0.0.9"
@@ -13747,6 +13748,11 @@ tunnel-agent@^0.6.0:
   dependencies:
     safe-buffer "^5.0.1"
 
+tweetnacl-bosagora@^1.0.3:
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/tweetnacl-bosagora/-/tweetnacl-bosagora-1.0.3.tgz#2402d16563f2217c2881afed7f3ccfd9c1c47fa6"
+  integrity sha512-3Mi4EXEZdpAVjwNp5B4QBvSwK/m7yEIQrSjGxLv6IDmqV7pEVc2wXX8YLQhWo6MFbp7OcCsoq2CiiRqvJ/iEtg==
+
 tweetnacl-util@^0.15.1:
   version "0.15.1"
   resolved "https://registry.yarnpkg.com/tweetnacl-util/-/tweetnacl-util-0.15.1.tgz#b80fcdb5c97bcc508be18c44a4be50f022eea00b"
@@ -13756,10 +13762,6 @@ tweetnacl@^0.14.3, tweetnacl@~0.14.0:
   version "0.14.5"
   resolved "https://registry.yarnpkg.com/tweetnacl/-/tweetnacl-0.14.5.tgz#5ae68177f192d4456269d108afa93ff8743f4f64"
   integrity sha512-KXXFFdAbFXY4geFIwoyNK+f5Z1b7swfXABfL7HXCmoIWMKU3dmS26672A4EeQtDzLKy7SXmfBu51JolvEKwtGA==
-
-"tweetnacl@https://github.com/jkkang-kosac/tweetnacl-js.git":
-  version "1.0.3"
-  resolved "https://github.com/jkkang-kosac/tweetnacl-js.git#bcff548e1a642f3cbb2567ce060e4ba8570d9fda"
 
 type-check@^0.4.0, type-check@~0.4.0:
   version "0.4.0"
