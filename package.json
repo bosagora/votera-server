@@ -13,6 +13,7 @@
   "dependencies": {
     "@ethersproject/experimental": "5.6.3",
     "blakejs": "^1.2.1",
+    "commons-budget-contract": "https://github.com/bosagora/commons-budget-contract.git#v1.x.x",
     "ethers": "5.6.9",
     "fast-json-stable-stringify": "^2.1.0",
     "graphql-rate-limit": "^3.3.0",

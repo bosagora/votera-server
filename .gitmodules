@@ -1,5 +1,0 @@
-[submodule "submodules/commons-budget-contract"]
-	path = submodules/commons-budget-contract
-	url = https://github.com/bosagora/commons-budget-contract.git
-	branch=v1.x.x
-
