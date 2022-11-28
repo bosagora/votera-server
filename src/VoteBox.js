@@ -1,4 +1,4 @@
-const nacl = require('tweetnacl-bosagora');
+const nacl = require('tweetnacl');
 const { blake2bInit, blake2bUpdate, blake2bFinal } = require('blakejs');
 
 class VoteBox {

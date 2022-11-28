@@ -1,12 +1,14 @@
 const { ethers, Wallet, BigNumber } = require('ethers');
 const fsp = require('fs/promises');
-const nacl = require('tweetnacl-bosagora');
+const nacl = require('tweetnacl');
 const { blake2bInit, blake2bUpdate, blake2bFinal } = require('blakejs');
 const { arrayify, hexlify } = require('ethers/lib/utils');
 const stringify = require('fast-json-stable-stringify');
 const moment = require('moment');
 const { NonceManager } = require('@ethersproject/experimental');
-const { CommonsBudget__factory, CommonsStorage__factory, VoteraVote__factory } = require('commons-budget-contract');
+const { CommonsBudget } = require('../../../src/CommonsBudget');
+const { CommonsStorage } = require('../../../src/CommonsStorage');
+const { VoteraVote } = require('../../../src/VoteraVote');
 const { VoteBox } = require('../../../src/VoteBox');
 const { ENUM_BUDGET_STATE_INVALID } = require('../../../src/types/CommonsBudgetType');
 const { GasPriceManager } = require('../../../src/GasPriceManager');
@@ -70,10 +72,7 @@ module.exports = {
 
     getCommonsBudgetContract() {
         if (!this.commonsBudget) {
-            this.commonsBudget = CommonsBudget__factory.connect(
-                strapi.config.boaclient.contract.commonsBudget,
-                this.signer,
-            );
+            this.commonsBudget = new CommonsBudget(strapi.config.boaclient.contract.commonsBudget, this.signer);
         }
         return this.commonsBudget;
     },
@@ -82,7 +81,7 @@ module.exports = {
         if (!this.commonsStorage) {
             const commonsBudget = this.getCommonsBudgetContract();
             const storageAddress = await commonsBudget.getStorageContractAddress({});
-            this.commonsStorage = CommonsStorage__factory.connect(storageAddress, this.signer);
+            this.commonsStorage = new CommonsStorage(storageAddress, this.signer);
         }
         return this.commonsStorage;
     },
@@ -90,7 +89,7 @@ module.exports = {
     getVoteraVoteContract() {
         if (!this.voteraVote) {
             const voteraSigner = new NonceManager(new GasPriceManager(this.signer));
-            this.voteraVote = VoteraVote__factory.connect(strapi.config.boaclient.contract.voteraVote, voteraSigner);
+            this.voteraVote = new VoteraVote(strapi.config.boaclient.contract.voteraVote, voteraSigner);
         }
         return this.voteraVote;
     },
