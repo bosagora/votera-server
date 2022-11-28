@@ -1,6 +1,6 @@
 const { ethers, Wallet, BigNumber } = require('ethers');
 const fsp = require('fs/promises');
-const nacl = require('tweetnacl');
+const nacl = require('tweetnacl-bosagora');
 const { blake2bInit, blake2bUpdate, blake2bFinal } = require('blakejs');
 const { arrayify, hexlify } = require('ethers/lib/utils');
 const stringify = require('fast-json-stable-stringify');
