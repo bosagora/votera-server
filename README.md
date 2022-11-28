@@ -9,11 +9,21 @@ it requires version 14 or later.
 
 Required module and package
 
-1. mysql : used as database
-2. redis : used for pubsub and redlock
-3. s3 : used as file upload repository
+1. submodule commons-budget-contract
+2. mysql : used as database
+3. redis : used for pubsub and redlock
+4. s3 : used as file upload repository
 
 configuration location and list
+
+### submodule commons-budget-contract
+```shell
+git submodule update --init
+cd submodules/commons-budget-contract
+npm install
+cp env/.env.sample env/.env
+npx hardhat compile
+```
 
 ### mysql
 
