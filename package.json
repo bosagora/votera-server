@@ -12,8 +12,7 @@
   },
   "dependencies": {
     "@ethersproject/experimental": "5.6.3",
-    "blakejs": "^1.2.1",
-    "commons-budget-contract": "https://github.com/bosagora/commons-budget-contract.git#v1.x.x",
+    "blakejs": "https://github.com/jkkang-kosac/blakejs.git",
     "ethers": "5.6.9",
     "fast-json-stable-stringify": "^2.1.0",
     "graphql-rate-limit": "^3.3.0",
@@ -39,7 +38,7 @@
     "strapi-plugin-users-permissions": "3.6.10",
     "strapi-provider-upload-aws-s3": "3.6.10",
     "strapi-utils": "3.6.10",
-    "tweetnacl-bosagora": "^1.0.3",
+    "tweetnacl": "https://github.com/jkkang-kosac/tweetnacl-js.git",
     "tweetnacl-util": "^0.15.1",
     "ws": "^8.9.0"
   },
